@@ -1,0 +1,76 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Medical Reports Archive | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row mb-5 align-items-center animate__animated animate__fadeInDown">
+    <div class="col-md-6 text-dark">
+        <h1 class="fw-bold mb-1">Medical <span class="gradient-text">Reports Vault</span></h1>
+        <p class="text-muted fs-5">Secure repository for all clinical lab results and diagnostic imaging.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <a href="{% url 'report_add' %}" class="btn btn-primary rounded-pill px-4 py-2 shadow-sm"><i class="bi bi-cloud-upload me-2"></i>Upload New Report</a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-5 overflow-hidden animate__animated animate__fadeInUp">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small text-uppercase">
+                <tr>
+                    <th class="ps-4">Report ID</th>
+                    <th>Patient</th>
+                    <th>Report Type</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th class="text-end pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td class="ps-4 fw-bold text-primary">#RP-{{ report.id }}</td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ report.patient.full_name }}</div>
+                        <small class="text-muted">ID: {{ report.patient.id }}</small>
+                    </td>
+                    <td><span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 rounded-pill">{{ report.report_type }}</span></td>
+                    <td>{{ report.report_date|date:"d M Y" }}</td>
+                    <td>
+                        {% if report.status == 'Reviewed' %}
+                        <span class="badge bg-success bg-opacity-10 text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Reviewed</span>
+                        {% else %}
+                        <span class="badge bg-warning bg-opacity-10 text-warning fw-bold"><i class="bi bi-clock-history me-1"></i>Pending Review</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-4">
+                        <div class="d-flex justify-content-end gap-2 flex-wrap">
+                            <a href="{% url 'review_report' report.id %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                {% if user.role == 'Doctor' %}Review & Sign{% else %}View Details{% endif %}
+                            </a>
+                            <a href="{% url 'report_pdf' report.id %}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                PDF
+                            </a>
+                            <a href="{% url 'report_image' report.id %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                                Image
+                            </a>
+                            <a href="{{ report.file_path.url|default:'#' }}" download class="btn btn-sm btn-light rounded-circle shadow-sm" title="Download Source File">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5">
+                        <i class="bi bi-folder2-open fs-1 text-muted opacity-25 d-block mb-3"></i>
+                        <h5 class="text-muted">No medical reports found in the archive.</h5>
+                        <a href="{% url 'report_add' %}" class="btn btn-primary rounded-pill mt-3 px-4">Upload First Report</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

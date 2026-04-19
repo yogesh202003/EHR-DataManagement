@@ -1,0 +1,201 @@
+﻿{% extends 'management/base.html' %}
+
+{% block content %}
+<div class="row align-items-center mb-5">
+    <div class="col-md-6">
+        <h2 class="fw-bold mb-0 text-dark"><i class="bi bi-person-lines-fill me-3 text-primary"></i>Record Details</h2>
+        <p class="text-muted mb-0">Complete profile information for {{ person.full_name }}.</p>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <a href="{% url 'person_edit' person.pk %}" class="btn btn-primary px-4 shadow-sm me-2"><i class="bi bi-pencil-square me-2"></i>Edit Profile</a>
+        <a href="{% url 'person_delete' person.pk %}" class="btn btn-outline-danger px-4 shadow-sm"><i class="bi bi-trash-fill"></i></a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="card-body p-4 text-center">
+                <div class="profile-img-container mb-4 mx-auto p-1 border rounded-circle profile-gradient avatar-140">
+                    {% if person.profile_photo %}
+                        <img src="{{ person.profile_photo.url }}" class="rounded-circle shadow-sm" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-white rounded-circle d-flex align-items-center justify-content-center" style="width: 100%; height: 100%;">
+                            <i class="bi bi-person-fill fs-1 text-primary"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <h4 class="fw-bold mb-1">{{ person.full_name }}</h4>
+                <p class="text-muted mb-3">{{ person.occupation|default:"No occupation listed" }}</p>
+                <div class="d-flex justify-content-center gap-2 mb-4">
+                    <span class="badge rounded-pill {% if person.status == 'Active' %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} px-3 py-2 border">
+                        <i class="bi bi-check-circle-fill me-1"></i>{{ person.status }} Account
+                    </span>
+                    <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2 border">
+                        <i class="bi bi-droplet-fill me-1"></i>{{ person.blood_group|default:"??" }} Group
+                    </span>
+                </div>
+                <hr class="my-4 opacity-10">
+                <div class="text-start mb-2">
+                    <small class="text-uppercase fw-bold text-muted" style="letter-spacing: 0.1em; font-size: 0.75rem;">Contact Details</small>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-light p-2 rounded me-3 text-primary"><i class="bi bi-telephone-fill"></i></div>
+                    <div>
+                        <div class="small fw-bold">Mobile</div>
+                        <div class="small text-muted">{{ person.mobile_number|default:"Not provided" }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-light p-2 rounded me-3 text-primary"><i class="bi bi-envelope-at-fill"></i></div>
+                    <div class="overflow-hidden">
+                        <div class="small fw-bold">Email</div>
+                        <div class="small text-muted text-truncate">{{ person.email|default:"Not provided" }}</div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="bg-light p-2 rounded me-3 text-primary"><i class="bi bi-geo-alt-fill"></i></div>
+                    <div>
+                        <div class="small fw-bold">Location</div>
+                        <div class="small text-muted">{{ person.city|default:"-" }}, {{ person.state|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="card-header bg-white border-0 py-3 ps-4 mt-2">
+                <h5 class="fw-bold mb-0">EHR Clinical Profile</h5>
+            </div>
+            <div class="card-body p-4 pt-0">
+                <!-- Section 1: Demographics -->
+                <div class="row g-4 mb-4 border-bottom pb-4">
+                    <div class="col-md-3">
+                        <label class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Gender</label>
+                        <div class="fw-semibold text-dark">{{ person.gender }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Birth Date</label>
+                        <div class="fw-semibold text-dark">{{ person.dob|default:"N/A" }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Age</label>
+                        <div class="fw-semibold text-dark">{{ person.age|default:"-" }} Years</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Marital Status</label>
+                        <div class="fw-semibold text-dark">{{ person.marital_status|default:"N/A" }}</div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Emergency & Insurance -->
+                <div class="row g-4 mb-4 border-bottom pb-4">
+                    <div class="col-md-6">
+                        <label class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Emergency Contact</label>
+                        <div class="fw-bold text-dark">{{ person.emergency_contact_name|default:"Not Listed" }}</div>
+                        <div class="small text-primary"><i class="bi bi-telephone-fill me-1"></i>{{ person.emergency_contact_number|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Insurance Detail</label>
+                        <div class="fw-bold text-dark">{{ person.insurance_provider|default:"No Coverage Listed" }}</div>
+                        <div class="small text-muted"><i class="bi bi-shield-check me-1"></i>{{ person.insurance_policy_number|default:"-" }}</div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Vitals & History -->
+                <div class="row g-4">
+                    <div class="col-md-3 text-center border-end">
+                        <label class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 0.65rem;">Height</label>
+                        <span class="fs-5 fw-black text-primary">{{ person.height_cm|default:"-" }} <small class="text-muted">cm</small></span>
+                    </div>
+                    <div class="col-md-3 text-center border-end">
+                        <label class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 0.65rem;">Weight</label>
+                        <span class="fs-5 fw-black text-primary">{{ person.weight_kg|default:"-" }} <small class="text-muted">kg</small></span>
+                    </div>
+                    <div class="col-md-3 text-center border-end">
+                        <label class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 0.65rem;">Smoking</label>
+                        <span class="badge {% if person.smoking_status == 'Never' %}bg-success-subtle text-success{% else %}bg-danger-subtle text-danger{% endif %} rounded-pill">{{ person.smoking_status }}</span>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <label class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 0.65rem;">Alcohol</label>
+                        <span class="badge {% if person.alcohol_consumption == 'None' %}bg-success-subtle text-success{% else %}bg-warning-subtle text-warning{% endif %} rounded-pill">{{ person.alcohol_consumption }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-danger bg-opacity-10 border-start border-danger border-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Medical Allergies</h6>
+                        <p class="mb-0 text-dark">{{ person.allergies|linebreaks|default:"<span class='text-muted'>No allergies reported.</span>"|safe }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-primary bg-opacity-10 border-start border-primary border-4">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold text-primary mb-3"><i class="bi bi-journal-medical me-2"></i>Medical History/Notes</h6>
+                        <p class="mb-0 text-dark">{{ person.medical_notes|linebreaks|default:"<span class='text-muted'>No medical notes available.</span>"|safe }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-12">
+        <h4 class="fw-bold text-dark mt-4 mb-3"><i class="bi bi-file-medical text-primary me-2"></i>Electronic Medical Records (EMR)</h4>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-0 py-3 ps-4 mt-2">
+                <h5 class="fw-bold mb-0">Medical History Diagnoses</h5>
+            </div>
+            <div class="card-body p-4 pt-0">
+                <div class="list-group list-group-flush">
+                    {% for history in medical_histories %}
+                        <div class="list-group-item px-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold text-dark mb-0">{{ history.condition_name }}</h6>
+                                <span class="badge bg-light text-dark border">{{ history.diagnosis_date|date:"M d, Y" }}</span>
+                            </div>
+                            <p class="text-muted small mb-0">{{ history.treatment_plan|truncatewords:20 }}</p>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted text-center py-4"><i class="bi bi-folder2-open d-block fs-3 opacity-50 mb-2"></i>No historical conditions recorded.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 h-100">
+            <div class="card-header bg-white border-0 py-3 ps-4 mt-2">
+                <h5 class="fw-bold mb-0">Recent Prescriptions</h5>
+            </div>
+            <div class="card-body p-4 pt-0">
+                <div class="list-group list-group-flush">
+                    {% for rx in prescriptions %}
+                        <div class="list-group-item px-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="fw-bold text-primary mb-0">{{ rx.medication_name }} <span class="text-muted fw-normal ms-1">({{ rx.dosage }})</span></h6>
+                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill">{{ rx.duration_days }} Days</span>
+                            </div>
+                            <p class="text-muted small mb-0 fw-semibold"><i class="bi bi-info-circle me-1"></i>{{ rx.instructions }}</p>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted text-center py-4"><i class="bi bi-capsule d-block fs-3 opacity-50 mb-2"></i>No prescriptions issued.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

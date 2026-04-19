@@ -1,0 +1,227 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Login | EHR Management System{% endblock %}
+
+{% block content %}
+<style>
+    /* Absolute full viewport override */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+    
+    /* Hide base template clunkiness and copyright footer */
+    nav.navbar, footer {
+        display: none !important;
+    }
+
+    /* New EHR Background wrapper */
+    .auth-bg {
+        min-height: 100vh;
+        width: 100vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: url('/media/backgrounds/ehr_bg.png') center/cover no-repeat fixed;
+        position: relative;
+        padding: 1rem;
+    }
+    
+    /* Semi-transparent dark overlay to make white card pop */
+    .auth-bg::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.35); 
+    }
+
+    /* Simple, highly professional white card */
+    .auth-card {
+        background: #ffffff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 440px;
+        padding: 3rem 2.5rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        z-index: 2;
+    }
+
+    .brand-icon {
+        width: 60px;
+        height: 60px;
+        background: #eff6ff;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
+    .brand-icon i {
+        font-size: 1.8rem;
+        color: #2563eb;
+    }
+
+    .auth-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+    .auth-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 2rem;
+    }
+
+    /* Clean inputs structure */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .form-control-custom {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        background: #f8fafc;
+        font-size: 1rem;
+        color: #0f172a;
+        transition: all 0.2s;
+    }
+    .form-control-custom:focus {
+        background: #ffffff;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+
+    .btn-submit {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 0.9rem;
+        width: 100%;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+        transition: 0.2s;
+    }
+    .btn-submit:hover {
+        background: #1d4ed8;
+    }
+
+    .pwd-link {
+        color: #2563eb;
+        font-size: 0.85rem;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .pwd-link:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<!-- Close base.html container wrapper -->
+</div>
+
+<div class="auth-bg animate__animated animate__fadeIn">
+    <div class="auth-card animate__animated animate__zoomIn" style="animation-duration: 0.5s;">
+        <div class="brand-icon mx-auto">
+            <i class="bi bi-shield-lock-fill"></i>
+        </div>
+        
+        <h2 class="auth-title text-center mb-4">Administrator Portal</h2>
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label">Administrator Access ID</label>
+                <input type="text" name="username" class="form-control-custom" placeholder="Enter Admin ID" required autocomplete="off">
+            </div>
+            
+            <div class="form-group">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0">Password</label>
+                    <a href="#" class="pwd-link" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot your key?</a>
+                </div>
+                <input type="password" name="password" class="form-control-custom" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-submit">Authenticate</button>
+            <div class="text-center mt-3">
+                <p class="small text-muted">New healthcare provider? <a href="{% url 'register' %}" class="pwd-link">Request Account</a></p>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reopen wrapper -->
+<div>
+{% endblock %}
+
+{% block modals %}
+<!-- Forgot Password Modal remains unchanged -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header border-0 pb-0 justify-content-end p-4">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center px-5 pt-0 pb-5">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                    <i class="bi bi-shield-lock-fill text-primary mt-1" style="font-size: 2.2rem;"></i>
+                </div>
+                <h3 class="fw-bold mb-2" style="font-family:'Outfit', sans-serif;">Reset Password</h3>
+                <p class="text-muted mb-4">Enter the registered professional email address linked to your provider account.</p>
+                
+                <form id="resetKeyForm">
+                    <div class="mb-4 text-start">
+                        <label class="form-label fw-bold text-dark mb-2" style="font-size: 0.85rem; text-transform: uppercase;">Recovery Email</label>
+                        <input type="email" class="form-control form-control-lg bg-light border-0" placeholder="doctor@clinic.com" required style="border-radius: 12px; font-size:1rem;">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 fw-bold" style="border-radius: 12px; padding: 1rem; font-size:1rem;">Send Recovery Link</button>
+                </form>
+                
+                <div id="resetSuccessMsg" class="d-none mt-4 text-success border border-success border-opacity-25 bg-success bg-opacity-10 p-4 rounded-4">
+                    <i class="bi bi-check-circle-fill me-2 fs-5"></i><br>
+                    <strong class="d-block mt-2">Instructions Delivered!</strong> 
+                    <span class="small">Check your secure inbox to proceed.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const pwdModal = document.getElementById('forgotPasswordModal');
+        if(pwdModal) {
+            document.body.appendChild(pwdModal);
+        }
+
+        const form = document.getElementById("resetKeyForm");
+        form.addEventListener("submit", function(e) {
+            e.preventDefault();
+            const btn = this.querySelector("button[type='submit']");
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Processing request...';
+            btn.classList.add('disabled');
+            
+            setTimeout(() => {
+                form.classList.add("d-none");
+                document.getElementById("resetSuccessMsg").classList.remove("d-none");
+            }, 1200);
+        });
+    });
+</script>
+{% endblock %}

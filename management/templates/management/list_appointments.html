@@ -1,0 +1,83 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Appointments | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row pt-4 px-3 animate__animated animate__fadeIn">
+    <div class="col-12 mb-4 d-flex align-items-center justify-content-between">
+        <div>
+            <h2 class="fw-bold mb-1 ls-n1">Appointments</h2>
+            <p class="text-muted mb-0">View booked consultations and upcoming visit details.</p>
+        </div>
+        <a href="{% url 'appointment_book' %}" class="btn btn-primary rounded-pill px-4 shadow-sm">
+            <i class="bi bi-plus-circle me-2"></i>Book Appointment
+        </a>
+    </div>
+
+    {% if messages %}
+    <div class="col-12 mb-3">
+        {% for message in messages %}
+        <div class="alert alert-success border-0 shadow-sm rounded-4">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-5 bg-white overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4">Patient</th>
+                            <th>Doctor</th>
+                            <th>Date</th>
+                            <th>Mode</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">{{ appointment.patient.full_name }}</div>
+                                <small class="text-muted">ID: {{ appointment.patient.id }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">Dr. {{ appointment.doctor.user.get_full_name|default:appointment.doctor.user.username }}</div>
+                                <small class="text-muted">{{ appointment.doctor.specialization }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ appointment.appointment_date|date:"d M Y" }}</div>
+                                <small class="text-muted">{{ appointment.appointment_date|date:"h:i A" }}</small>
+                            </td>
+                            <td>
+                                {% if appointment.is_virtual %}
+                                <span class="badge bg-info bg-opacity-10 text-info rounded-pill px-3">Virtual</span>
+                                {% else %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3">In Person</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if appointment.status == 'Scheduled' %}bg-primary{% elif appointment.status == 'Completed' %}bg-success{% else %}bg-secondary{% endif %} rounded-pill px-3">
+                                    {{ appointment.status }}
+                                </span>
+                            </td>
+                            <td class="text-muted small">{{ appointment.reason|default:"No reason entered." }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <i class="bi bi-calendar-x fs-1 text-muted opacity-25 d-block mb-3"></i>
+                                <h5 class="text-muted">No appointments have been booked yet.</h5>
+                                <a href="{% url 'appointment_book' %}" class="btn btn-primary rounded-pill mt-3 px-4">Book First Appointment</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

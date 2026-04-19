@@ -1,0 +1,169 @@
+﻿{% extends 'management/base.html' %}
+
+{% block title %}Operations Hub | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row pt-4 px-3 animate__animated animate__fadeIn">
+    <!-- Header Section -->
+    <div class="col-12 mb-5">
+        <h2 class="fw-bold mb-1 ls-n1">Operations <span class="gradient-text">Command Hub</span></h2>
+        <p class="text-muted mb-0">Centralized real-time clinical performance and throughput metrics</p>
+    </div>
+
+    <!-- Top Metrics Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card p-4 border-0 shadow-sm bg-white rounded-5 h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary me-2"><i class="bi bi-people-fill"></i></div>
+                    <small class="text-muted fw-bold">Active Records</small>
+                </div>
+                <h3 class="fw-black text-dark mb-0">{{ total_patients }}</h3>
+                <div class="small text-success mt-2"><i class="bi bi-arrow-up-short"></i> +2% Monthly</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 border-0 shadow-sm bg-white rounded-5 h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-danger bg-opacity-10 p-2 rounded-3 text-danger me-2"><i class="bi bi-box-seam-fill"></i></div>
+                    <small class="text-muted fw-bold">Low Stock Warning</small>
+                </div>
+                <h3 class="fw-black text-danger mb-0">{{ low_stock_count }}</h3>
+                <div class="small text-muted mt-2">Requires immediate restock</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 border-0 shadow-sm bg-white rounded-5 h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success bg-opacity-10 p-2 rounded-3 text-success me-2"><i class="bi bi-activity"></i></div>
+                    <small class="text-muted fw-bold">Avg. Weekly Visits</small>
+                </div>
+                <h3 class="fw-black text-success mb-0">12.4</h3>
+                <div class="small text-muted mt-2">Throughput Efficiency</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card p-4 border-0 shadow-sm bg-white rounded-5 h-100">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-info bg-opacity-10 p-2 rounded-3 text-info me-2"><i class="bi bi-robot"></i></div>
+                    <small class="text-muted fw-bold">AI Diagnostics Run</small>
+                </div>
+                <h3 class="fw-black text-info mb-0">{{ ai_run_count }}</h3>
+
+                <div class="small text-muted mt-2">Last 30 Days</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="col-lg-8 mb-4">
+        <div class="card p-4 p-md-5 border-0 shadow-smooth bg-white rounded-5 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Patient Throughput</h5>
+                <div class="badge bg-light text-muted px-3 py-2 rounded-pill small">Last 7 Days</div>
+            </div>
+            
+            <div style="height: 350px;">
+                <canvas id="visitThroughputChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side Resource Panel -->
+    <div class="col-lg-4 mb-4">
+        <div class="card p-4 border-0 shadow-smooth bg-white rounded-5 h-100">
+            <h5 class="fw-bold text-dark mb-4 border-bottom pb-3"><i class="bi bi-ui-checks-grid text-primary me-2"></i>Resource Load</h5>
+            
+            <div class="d-flex flex-column gap-4">
+                {% for dept in dept_load %}
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-dark fw-bold small">{{ dept.name }}</span>
+                        <span class="text-muted small fw-bold">{{ dept.load }}%</span>
+                    </div>
+                    <div class="progress rounded-pill bg-light" style="height: 10px;">
+                        <div class="progress-bar rounded-pill {% if dept.load > 85 %}bg-danger{% elif dept.load > 60 %}bg-warning{% else %}bg-primary{% endif %}" 
+                             style="width: {{ dept.load }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-5 p-4 bg-primary bg-opacity-10 rounded-4 border border-primary border-opacity-10">
+                <h6 class="fw-bold text-primary mb-2 small text-uppercase ls-1">Optimization Note</h6>
+                <p class="small text-dark mb-0 opacity-75">The Pharmacy department is currently at peak load. Consider reallocating staff from Radiology to handle evening traffic.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disease Insights -->
+    <div class="col-12">
+        <div class="card p-4 border-0 shadow-smooth bg-white rounded-5">
+            <h5 class="fw-bold text-dark mb-4"><i class="bi bi-shield-plus text-primary me-2"></i>Disease Prevalence Patterns</h5>
+            <div class="row g-4">
+                {% for disease in disease_trends %}
+                <div class="col-md-2">
+                    <div class="p-4 bg-light bg-opacity-50 rounded-4 text-center border h-100 hover-soft">
+                        <small class="text-muted text-uppercase fw-bold ls-1 d-block mb-3">Alert Pattern</small>
+                        <h6 class="fw-bold text-dark mb-2">{{ disease.predicted_disease }}</h6>
+                        <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3">{{ disease.count }} Cases</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5 text-muted">Insufficient diagnosis data for pattern recognition.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('visitThroughputChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ visit_labels|safe }},
+            datasets: [{
+                label: 'Clinic Visits',
+                data: {{ visit_counts|safe }},
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderColor: '#2563eb',
+                borderWidth: 2,
+                borderRadius: 12,
+                hoverBackgroundColor: '#2563eb'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { color: '#94a3b8' }
+                },
+                x: {
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: { color: '#94a3b8' }
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    .ls-n1 { letter-spacing: -1px; }
+    .ls-1 { letter-spacing: 1px; }
+    .fw-black { font-weight: 800; }
+    .shadow-smooth { box-shadow: 0 10px 40px rgba(0,0,0,0.04); }
+    .hover-soft { transition: all 0.3s ease; cursor: pointer; }
+    .hover-soft:hover { transform: translateY(-5px); background: #ffffff !important; box-shadow: 0 20px 40px rgba(0,0,0,0.05); }
+</style>
+{% endblock %}
+

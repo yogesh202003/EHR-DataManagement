@@ -1,0 +1,415 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Healthcare Finder{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+    :root {
+        --map-height: calc(100vh - 180px);
+    }
+
+    /* Layout & Map Container */
+    .healthcare-wrapper {
+        background: var(--bg-surface);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .healthcare-map-box {
+        width: 100%;
+        height: var(--map-height);
+        min-height: 400px;
+        position: relative;
+    }
+
+    #map {
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+    /* Sidebar Styling */
+    .places-box {
+        height: var(--map-height);
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-body);
+        border-left: 1px solid var(--border-color);
+    }
+
+    .sidebar-header {
+        padding: 15px;
+        background: var(--bg-surface);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    #places-list {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 10px;
+    }
+
+    /* Facility Cards */
+    .facility-card {
+        background: var(--bg-surface);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border: 1px solid var(--border-color);
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+    .facility-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
+    }
+
+    .facility-name {
+        font-weight: 600;
+        color: var(--text-main);
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .facility-type {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--primary-color);
+    }
+
+    /* Mobile Adjustments */
+    @media (max-width: 991px) {
+        :root { --map-height: 45vh; }
+        .places-box { border-left: none; border-top: 1px solid var(--border-color); }
+    }
+
+    /* Custom Scrollbar */
+    #places-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #places-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid py-3">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Healthcare Finder</h2>
+            <p class="text-muted mb-0">Discover hospitals, clinics, and pharmacies near you.</p>
+        </div>
+
+        <button id="find-me" class="btn btn-primary btn-lg shadow-sm px-4">
+            <i class="bi bi-crosshair me-2"></i>Locate Me
+        </button>
+    </div>
+
+    <div class="healthcare-wrapper animate__animated animate__fadeInUp">
+        <div class="row g-0">
+            <div class="col-lg-8 border-end position-relative">
+                <div class="healthcare-map-box">
+                    <div id="map"></div>
+                    <div id="map-loader" class="position-absolute top-50 start-50 translate-middle d-none text-center">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 text-muted small">Loading map...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="places-box">
+                    <div class="sidebar-header border-bottom-0 pb-0">
+                        <h6 class="mb-3 fw-bold">Nearby Facilities</h6>
+                        <div class="btn-group w-100 shadow-sm rounded-pill overflow-hidden mb-3" role="group">
+                            <input type="radio" class="btn-check" name="filter" id="filter-all" checked onchange="filterList('all')">
+                            <label class="btn btn-outline-primary border-0 py-2 small fw-bold" for="filter-all">All</label>
+                            
+                            <input type="radio" class="btn-check" name="filter" id="filter-hospital" onchange="filterList('hospital')">
+                            <label class="btn btn-outline-primary border-0 py-2 small fw-bold" for="filter-hospital"><i class="bi bi-hospital me-1"></i>Hospitals</label>
+                            
+                            <input type="radio" class="btn-check" name="filter" id="filter-pharmacy" onchange="filterList('pharmacy')">
+                            <label class="btn btn-outline-primary border-0 py-2 small fw-bold" for="filter-pharmacy"><i class="bi bi-p-circle me-1"></i>Pharmacies</label>
+                        </div>
+                    </div>
+                    <div id="places-list">
+                        <div class="text-center text-muted p-5 mt-3">
+                            <i class="bi bi-geo-alt fs-1 mb-3 d-block opacity-25"></i>
+                            <p>Click "Locate Me" to discover facilities nearby</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Debug panel (visible in dev only) -->
+<div id="map-debug" class="map-debug">
+    <div style="font-weight:700;margin-bottom:6px">Map debug</div>
+    <div style="font-size:11px;opacity:0.8;margin-bottom:8px">status messages appear here</div>
+    <div id="debug-content"></div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    let map;
+    let markers = []; // Object to store markers by ID
+    let allElements = []; // Store raw data from Overpass
+    let userMarker;
+    let currentFilter = 'all';
+
+    // Premium marker styles (pulled from CSS design tokens at runtime)
+    const rootStyles = getComputedStyle(document.documentElement);
+    const colors = {
+        hospital: rootStyles.getPropertyValue('--danger-color').trim() || '#ef4444',
+        clinic: rootStyles.getPropertyValue('--danger-color').trim() || '#ef4444',
+        pharmacy: rootStyles.getPropertyValue('--success-color').trim() || '#10b981',
+        default: rootStyles.getPropertyValue('--primary-color').trim() || '#2563eb'
+    };
+
+    function dbg(msg, level='info'){
+        console[level](msg);
+        const el = document.getElementById('debug-content');
+        if(!el) return;
+        const row = document.createElement('div');
+        row.innerHTML = `<span style="opacity:0.5">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+        row.style.marginBottom = '4px';
+        if(level==='error') row.style.color = rootStyles.getPropertyValue('--danger-color') || '#dc2626';
+        el.prepend(row);
+    }
+
+    function initMap() {
+        try {
+            if (typeof L === 'undefined') throw new Error('Leaflet (L) is not loaded');
+
+            // Initialize map
+            map = L.map('map', {
+                zoomControl: false,
+                fadeAnimation: true,
+                markerZoomAnimation: true
+            }).setView([20.5937, 78.9629], 5);
+
+            dbg('Map instance created successfully');
+
+            // Add Premium Tile Layer (CartoDB Voyager)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '© OpenStreetMap contributors © CARTO',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            // Responsive Map Sizing using ResizeObserver
+            const mapContainer = document.getElementById('map');
+            const resizeObserver = new ResizeObserver(() => {
+                if (map) {
+                    map.invalidateSize();
+                }
+            });
+            resizeObserver.observe(mapContainer);
+
+            // Initial reflows
+            map.whenReady(() => {
+                setTimeout(() => map.invalidateSize(), 100);
+                setTimeout(() => map.invalidateSize(), 500);
+                dbg('Map ready and reflowed');
+            });
+
+        } catch (err) {
+            dbg('Map init error: ' + err.message, 'error');
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", initMap);
+
+    function filterList(type) {
+        currentFilter = type;
+        renderResults();
+    }
+
+    function renderResults() {
+        const listContainer = document.getElementById('places-list');
+        listContainer.innerHTML = "";
+
+        // Remove existing markers from map
+        markers.forEach(m => {
+            if (map && m.leafletMarker) {
+                map.removeLayer(m.leafletMarker);
+            }
+        });
+        markers = [];
+
+        const filtered = allElements.filter(el => {
+            const amenity = el.type;
+            if (!amenity) return false;
+
+            if (currentFilter === 'all') return true;
+            if (currentFilter === 'hospital') return amenity === 'hospital' || amenity === 'clinic' || amenity === 'doctors' || amenity === 'dentist';
+            if (currentFilter === 'pharmacy') return amenity === 'pharmacy';
+            return amenity === currentFilter;
+        });
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = `
+                <div class="text-center p-5 text-muted">
+                    <i class="bi bi-search fs-1 mb-3 d-block opacity-25"></i>
+                    <p>No ${currentFilter === 'all' ? 'facilities' : currentFilter + 's'} found.</p>
+                </div>`;
+            return;
+        }
+
+        filtered.forEach(el => {
+            const name = el.name || "Healthcare Center";
+            const type = el.type || "Facility";
+            const address = el.address || "Address not listed";
+            const color = colors[type] || colors.default;
+            const distanceText = el.distance_km ? `${el.distance_km} km away` : 'Nearby';
+
+            // Add Marker with dynamic color
+            const m = L.circleMarker([el.lat, el.lon], {
+                radius: 8,
+                fillColor: color,
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            m.bindPopup(`
+                <div class="py-1">
+                    <strong class="d-block">${name}</strong>
+                    <span class="badge mt-1" style="background-color: ${color}22; color: ${color}; border: 1px solid ${color}">${type}</span>
+                </div>
+            `);
+
+            // Store marker info
+            const markerObj = { id: el.id, type: type, leafletMarker: m };
+            markers.push(markerObj);
+
+            // Add Sidebar Card
+            const card = document.createElement('div');
+            card.className = 'facility-card animate__animated animate__fadeIn';
+            card.innerHTML = `
+                <div class="float-end">
+                    <i class="bi bi-chevron-right text-muted small"></i>
+                </div>
+                <span class="facility-type small fw-bold" style="color: ${color}">${type}</span>
+                <span class="facility-name mb-1">${name}</span>
+                <div class="text-muted small">
+                    <i class="bi bi-geo-alt me-1"></i>${address}
+                </div>
+                <div class="text-muted small mt-1">
+                    <i class="bi bi-signpost-2 me-1"></i>${distanceText}
+                </div>
+            `;
+
+            card.onclick = () => {
+                map.setView([el.lat, el.lon], 16, { animate: true });
+                m.openPopup();
+                document.querySelectorAll('.facility-card').forEach(c => c.classList.remove('border-primary', 'bg-light'));
+                card.classList.add('border-primary', 'bg-light');
+            };
+
+            listContainer.appendChild(card);
+        });
+
+        if (markers.length > 0) {
+            const group = new L.featureGroup([...markers.map(m => m.leafletMarker), userMarker].filter(Boolean));
+            map.fitBounds(group.getBounds().pad(0.2), { animate: true });
+        }
+    }
+
+    document.getElementById('find-me').onclick = function () {
+        const btn = this;
+        const originalContent = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Locating...';
+        btn.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+
+                map.setView([lat, lng], 14, { animate: true, duration: 1 });
+
+                if (userMarker) map.removeLayer(userMarker);
+                userMarker = L.circleMarker([lat, lng], {
+                    radius: 10,
+                    fillColor: rootStyles.getPropertyValue('--primary-color') || '#0d6efd',
+                    color: "#fff",
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).addTo(map).bindPopup("<strong>You are here</strong>").openPopup();
+
+                dbg(`Located at: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                fetchFacilities(lat, lng, btn, originalContent);
+            },
+            function (err) {
+                dbg('Geolocation error: ' + err.message, 'error');
+                const listContainer = document.getElementById('places-list');
+                listContainer.innerHTML = `
+                    <div class="text-center p-5 text-muted">
+                        <i class="bi bi-geo-alt fs-1 mb-3 d-block opacity-25"></i>
+                        <p>Live location access is required to show nearby providers from your current position.</p>
+                        <small>Please allow location permission in your browser and try again.</small>
+                    </div>`;
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            },
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    };
+
+    function fetchFacilities(lat, lng, btn, originalContent) {
+        function showFetchError(msg) {
+            const listContainer = document.getElementById('places-list');
+            listContainer.innerHTML = `<div class="text-center p-5 text-muted"><i class="bi bi-exclamation-triangle fs-1 mb-3 d-block opacity-25"></i><p>${msg}</p></div>`;
+        }
+
+        dbg('Fetching nearby facilities from the local provider API...');
+
+        fetch(`{% url "api_nearby_healthcare" %}?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP Error: ${res.status}`);
+                }
+                return res.json();
+            })
+            .then(data => {
+                allElements = data.providers || [];
+                dbg(`Received ${allElements.length} nearby facilities from the local API`);
+                renderResults();
+
+                if (allElements.length === 0) {
+                    showFetchError('No facilities found near this location.');
+                }
+            })
+            .catch(err => {
+                dbg('Provider API error: ' + err.message, 'error');
+                showFetchError('Unable to load nearby providers right now. Please try again in a moment.');
+            })
+            .finally(() => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            });
+    }
+</script>
+{% endblock %}

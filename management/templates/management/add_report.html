@@ -1,0 +1,71 @@
+﻿{% extends 'management/base.html' %}
+
+{% block title %}Upload Medical Report | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center pt-5">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm p-4 animate__animated animate__fadeIn">
+            <div class="d-flex align-items-center mb-5">
+                <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary me-3">
+                    <i class="bi bi-file-earmark-medical-fill fs-3"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold mb-0">Record Lab Report</h2>
+                    <p class="text-muted small mb-0">Securely upload and manage digital medical reports.</p>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="row g-4">
+                {% csrf_token %}
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Select Recipient Patient</label>
+                    <select name="patient" class="form-select form-select-lg border-2 shadow-sm" required>
+                        {% for patient in form.fields.patient.queryset %}
+                            <option value="{{ patient.id }}">{{ patient.full_name }} (ID: {{ patient.id }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Report Type</label>
+                    <select name="report_type" class="form-select form-select-lg border-2 shadow-sm" required>
+                        <option value="Blood Test">Blood Analysis</option>
+                        <option value="X-Ray">Radiology (X-Ray)</option>
+                        <option value="Scan">MRI / CT Scan</option>
+                        <option value="COVID-19">COVID-19 Diagnostic</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Dated On</label>
+                    <input type="date" name="report_date" class="form-control form-control-lg border-2 shadow-sm" required>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Digital File (PDF/JPG/PNG)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-2 border-end-0"><i class="bi bi-cloud-upload"></i></span>
+                        <input type="file" name="file_path" class="form-control form-control-lg border-2 border-start-0 shadow-sm" required>
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Initial Report Status</label>
+                    <select name="status" class="form-select form-select-lg border-2 shadow-sm">
+                        <option value="Pending">Pending Review</option>
+                        <option value="Reviewed">Finalized/Reviewed</option>
+                    </select>
+                </div>
+
+                <div class="col-12 mt-5 pt-4 border-top">
+                    <div class="d-flex justify-content-end gap-3">
+                        <a href="{% url 'dashboard' %}" class="btn btn-light rounded-pill px-5">Back</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">Process Upload</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

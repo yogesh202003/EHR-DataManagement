@@ -1,0 +1,25 @@
+﻿{% extends 'management/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center pt-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-body p-5 text-center">
+                <div class="bg-danger bg-opacity-10 text-danger rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                    <i class="bi bi-exclamation-triangle fs-1"></i>
+                </div>
+                <h3 class="fw-bold mb-2">Are you sure?</h3>
+                <p class="text-muted mb-4">You are about to delete the record for <strong>{{ object.full_name }}</strong>. This action cannot be undone and will remove all associated data.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-3">
+                        <button type="submit" class="btn btn-danger btn-lg shadow-sm fw-bold">Yes, Delete Record</button>
+                        <a href="{% url 'person_view' object.pk %}" class="btn btn-outline-secondary btn-lg border-2 fw-semibold">Cancel and Go Back</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,370 @@
+{% extends 'management/base.html' %}
+
+{% block title %}User Management | EHR Data{% endblock %}
+
+{% block content %}
+<style>
+    .user-mgmt-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .user-mgmt-header h2 {
+        font-weight: 700;
+        margin: 0;
+    }
+    .user-stats {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    .user-stat-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 1rem;
+        border-radius: 999px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border: 1px solid;
+    }
+    .stat-total { background: rgba(37,99,235,0.08); color: #2563eb; border-color: rgba(37,99,235,0.2); }
+    .stat-admin { background: rgba(239,68,68,0.08); color: #ef4444; border-color: rgba(239,68,68,0.2); }
+    .stat-doctor { background: rgba(16,185,129,0.08); color: #10b981; border-color: rgba(16,185,129,0.2); }
+    .stat-patient { background: rgba(99,102,241,0.08); color: #6366f1; border-color: rgba(99,102,241,0.2); }
+
+    .search-bar {
+        position: relative;
+        max-width: 360px;
+        margin-bottom: 1.25rem;
+    }
+    .search-bar i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 0.9rem;
+    }
+    .search-bar input {
+        padding-left: 2.5rem;
+        border-radius: 12px;
+        border: 1.5px solid #e2e8f0;
+        font-size: 0.9rem;
+        height: 44px;
+        transition: 0.25s;
+    }
+    .search-bar input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+    }
+
+    .user-table { border-radius: 16px; overflow: hidden; }
+    .user-table thead th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+        color: #64748b;
+        padding: 1rem 1.25rem;
+        border-bottom: 2px solid #f1f5f9;
+        background: #f8fafc;
+    }
+    .user-table tbody td {
+        padding: 0.9rem 1.25rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .user-table tbody tr { transition: background 0.2s; }
+    .user-table tbody tr:hover { background: #f8fafc; }
+
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    .avatar-admin { background: rgba(239,68,68,0.12); color: #ef4444; }
+    .avatar-doctor { background: rgba(16,185,129,0.12); color: #10b981; }
+    .avatar-patient { background: rgba(99,102,241,0.12); color: #6366f1; }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .role-admin { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .role-doctor { background: rgba(16,185,129,0.1); color: #059669; }
+    .role-patient { background: rgba(99,102,241,0.1); color: #4f46e5; }
+
+    .btn-delete-user {
+        background: none;
+        border: 1.5px solid #fecaca;
+        color: #ef4444;
+        border-radius: 10px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: 0.2s;
+        cursor: pointer;
+    }
+    .btn-delete-user:hover {
+        background: #ef4444;
+        color: white;
+        border-color: #ef4444;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+    }
+    .btn-delete-user:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Delete confirmation modal */
+    .delete-modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(15,23,42,0.5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .delete-modal-backdrop.show { display: flex; }
+    .delete-modal-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        text-align: center;
+        animation: modalPop 0.3s ease;
+    }
+    @keyframes modalPop {
+        from { opacity: 0; transform: scale(0.9) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .delete-icon-wrap {
+        width: 64px; height: 64px;
+        border-radius: 50%;
+        background: #fef2f2;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.25rem;
+    }
+    .delete-icon-wrap i { font-size: 1.8rem; color: #ef4444; }
+
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+    .empty-state i { font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem; display: block; }
+
+    /* Dark mode tweaks */
+    body.dark-mode .user-table thead th { background: var(--bg-surface); color: var(--text-muted); border-color: var(--border-color); }
+    body.dark-mode .user-table tbody td { border-color: var(--border-color); }
+    body.dark-mode .user-table tbody tr:hover { background: var(--bg-surface); }
+    body.dark-mode .search-bar input { background: var(--bg-surface); border-color: var(--border-color); color: var(--text-primary); }
+    body.dark-mode .delete-modal-card { background: var(--bg-card); }
+</style>
+
+<!-- Header -->
+<div class="user-mgmt-header animate__animated animate__fadeIn">
+    <div>
+        <h2><i class="bi bi-shield-lock-fill text-primary me-2"></i>User Management</h2>
+        <p class="text-muted mb-0 mt-1">View, audit, and manage all platform accounts.</p>
+    </div>
+    <div class="user-stats">
+        <span class="user-stat-pill stat-total"><i class="bi bi-people-fill"></i> {{ users|length }} Total</span>
+        <span class="user-stat-pill stat-admin"><i class="bi bi-shield-fill"></i> {{ admin_count }} Admins</span>
+        <span class="user-stat-pill stat-doctor"><i class="bi bi-heart-pulse-fill"></i> {{ doctor_count }} Doctors</span>
+        <span class="user-stat-pill stat-patient"><i class="bi bi-person-fill"></i> {{ patient_count }} Patients</span>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="search-bar animate__animated animate__fadeInUp">
+    <i class="bi bi-search"></i>
+    <input type="text" id="userSearch" class="form-control" placeholder="Search by username, email, or role..." autocomplete="off">
+</div>
+
+<!-- Success message -->
+{% if messages %}
+<div class="animate__animated animate__fadeIn">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show d-flex align-items-center gap-2 rounded-3 shadow-sm border-0" role="alert">
+        <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-success{% elif message.tags == 'danger' %}bi-exclamation-triangle-fill text-danger{% else %}bi-info-circle-fill text-primary{% endif %}"></i>
+        <span>{{ message }}</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Users Table -->
+<div class="card shadow-sm border-0 user-table animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0" id="usersTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4">User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Linked Patient</th>
+                        <th>Joined</th>
+                        <th>Last Login</th>
+                        <th class="text-center pe-4">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr data-search="{{ u.username|lower }} {{ u.email|lower }} {{ u.role|lower }} {{ u.first_name|lower }} {{ u.last_name|lower }}">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="user-avatar avatar-{{ u.role|lower }}">
+                                    {% if u.role == 'Admin' %}<i class="bi bi-shield-fill"></i>
+                                    {% elif u.role == 'Doctor' %}<i class="bi bi-heart-pulse-fill"></i>
+                                    {% else %}<i class="bi bi-person-fill"></i>{% endif %}
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-dark">{{ u.username }}</div>
+                                    <div class="text-muted" style="font-size:0.78rem;">
+                                        {% if u.first_name %}{{ u.first_name }} {{ u.last_name }}{% else %}—{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-muted" style="font-size:0.88rem;">{{ u.email|default:"—" }}</span>
+                        </td>
+                        <td>
+                            <span class="role-badge role-{{ u.role|lower }}">
+                                {% if u.role == 'Admin' %}<i class="bi bi-shield-check"></i>
+                                {% elif u.role == 'Doctor' %}<i class="bi bi-clipboard2-pulse"></i>
+                                {% else %}<i class="bi bi-person-badge"></i>{% endif %}
+                                {{ u.role }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if u.person %}
+                                <span class="text-dark fw-medium" style="font-size:0.85rem;">{{ u.person.full_name }}</span>
+                            {% else %}
+                                <span class="text-muted" style="font-size:0.82rem;">Not linked</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="text-muted" style="font-size:0.82rem;">{{ u.created_at|date:"d M Y" }}</span>
+                        </td>
+                        <td>
+                            {% if u.last_login %}
+                                <span class="text-muted" style="font-size:0.82rem;">{{ u.last_login|timesince }} ago</span>
+                            {% else %}
+                                <span class="text-muted" style="font-size:0.82rem;">Never</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center pe-4">
+                            {% if u.id == request.user.id %}
+                                <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2" style="font-size:0.75rem;">You</span>
+                            {% elif u.is_superuser %}
+                                <span class="badge bg-light text-muted rounded-pill px-3 py-2" style="font-size:0.75rem;">Protected</span>
+                            {% else %}
+                                <button type="button" class="btn-delete-user" 
+                                        onclick="showDeleteModal('{{ u.id }}', '{{ u.username|escapejs }}', '{{ u.role }}')">
+                                    <i class="bi bi-trash3-fill me-1"></i>Remove
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <i class="bi bi-people"></i>
+                                <h6 class="fw-bold text-dark">No users found</h6>
+                                <p class="text-muted small">There are no registered accounts in the system yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="delete-modal-backdrop" id="deleteModal">
+    <div class="delete-modal-card">
+        <div class="delete-icon-wrap">
+            <i class="bi bi-person-x-fill"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-2">Remove User Account?</h5>
+        <p class="text-muted small mb-1">You are about to permanently delete:</p>
+        <p class="fw-bold text-dark mb-0" id="deleteUserName" style="font-size:1.1rem;"></p>
+        <p class="text-muted small mb-3">Role: <span id="deleteUserRole" class="fw-semibold"></span></p>
+        <div class="alert alert-warning border-0 rounded-3 py-2 px-3 small text-start mb-3" style="background:rgba(245,158,11,0.08);">
+            <i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>
+            This will also remove all data linked to this user account. This action <strong>cannot be undone</strong>.
+        </div>
+        <form method="post" id="deleteForm">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" id="deleteUserId">
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-light flex-fill rounded-pill fw-semibold" onclick="hideDeleteModal()">Cancel</button>
+                <button type="submit" class="btn btn-danger flex-fill rounded-pill fw-semibold">
+                    <i class="bi bi-trash3-fill me-1"></i>Delete Permanently
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showDeleteModal(userId, username, role) {
+    document.getElementById('deleteUserId').value = userId;
+    document.getElementById('deleteUserName').textContent = username;
+    document.getElementById('deleteUserRole').textContent = role;
+    document.getElementById('deleteModal').classList.add('show');
+}
+
+function hideDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('show');
+}
+
+// Close on backdrop click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) hideDeleteModal();
+});
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') hideDeleteModal();
+});
+
+// Live search
+document.getElementById('userSearch').addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    const rows = document.querySelectorAll('#usersTable tbody tr[data-search]');
+    rows.forEach(row => {
+        const searchText = row.getAttribute('data-search') || '';
+        row.style.display = searchText.includes(query) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

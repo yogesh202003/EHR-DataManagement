@@ -1,0 +1,94 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Book Appointment | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center pt-5">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm p-4 animate__animated animate__zoomIn">
+            <div class="d-flex align-items-center mb-5">
+                <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary me-3">
+                    <i class="bi bi-calendar-check fs-3"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold mb-0">Schedule Patient Visit</h2>
+                    <p class="text-muted small mb-0">Connect a patient with an available specialist.</p>
+                </div>
+            </div>
+
+            <form method="post" class="row g-4" id="appointmentForm">
+                {% csrf_token %}
+                
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Select Patient</label>
+                    <select name="patient" class="form-select form-select-lg border-2 shadow-sm" required>
+                        <option value="" disabled {% if not user.person %}selected{% endif %}>Choose a patient...</option>
+                        {% for pt in patients %}
+                            <option value="{{ pt.id }}" {% if user.person and user.person.id == pt.id %}selected{% endif %}>{{ pt.full_name }} (ID: {{ pt.id }})</option>
+                        {% endfor %}
+                    </select>
+                    {% if user.role == 'Patient' and user.person %}
+                        <small class="text-muted d-block mt-1">You're currently signed in as {{ user.person.full_name }} — select another patient to book on their behalf.</small>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Select Doctor / Specialist</label>
+                    <select name="doctor" class="form-select form-select-lg border-2 shadow-sm" required>
+                        <option value="" disabled selected>Choose a specialist...</option>
+                        {% for doc in doctors %}
+                            <option value="{{ doc.id }}">Dr. {{ doc.user.get_full_name|default:doc.user.username }} - {{ doc.specialization }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Appointment Date & Time</label>
+                    <input type="datetime-local" name="appointment_date" class="form-control form-control-lg border-2 shadow-sm" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Initial Status</label>
+                    <select name="status" class="form-select form-select-lg border-2 shadow-sm">
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6 d-flex align-items-center mt-5">
+                    <div class="form-check form-switch fs-5">
+                        <input class="form-check-input" type="checkbox" role="switch" name="is_virtual" id="isVirtualSwitch">
+                        <label class="form-check-label fs-6 fw-bold ms-2 mt-1" for="isVirtualSwitch">Virtual Appointment</label>
+                    </div>
+                </div>
+
+                <div class="col-md-6" id="meetingLinkSection" style="display: none;">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Meeting Link (Optional)</label>
+                    <input type="url" name="meeting_link" class="form-control form-control-lg border-2 shadow-sm" placeholder="e.g., https://zoom.us/j/12345">
+                    <div class="form-text extra-small">Doctors can also provide this after booking.</div>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label small fw-bold text-uppercase text-muted">Reason for Visit / Symptoms</label>
+                    <textarea name="reason" rows="4" class="form-control border-2 shadow-sm" placeholder="e.g., Routine checkup, Persistent cough..."></textarea>
+                </div>
+
+                <div class="col-12 mt-5 pt-4 border-top">
+                    <div class="d-flex justify-content-end gap-3">
+                        <a href="{% url 'dashboard' %}" class="btn btn-light rounded-pill px-5">Back</a>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm">Confirm Booking</button>
+                    </div>
+                </div>
+            </form>
+
+            <script>
+                document.getElementById('isVirtualSwitch').addEventListener('change', function() {
+                    const section = document.getElementById('meetingLinkSection');
+                    section.style.display = this.checked ? 'block' : 'none';
+                });
+            </script>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

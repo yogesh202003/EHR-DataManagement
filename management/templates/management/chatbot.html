@@ -1,0 +1,148 @@
+﻿{% extends 'management/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-0"><i class="bi bi-robot me-2 text-primary"></i>Database Chatbot</h2>
+                <p class="text-muted mb-0">Ask me anything about the records in the database.</p>
+            </div>
+            <button id="clear-chat" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i>Clear Chat</button>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div id="chat-container" class="p-3 h-400 bg-surface overflow-y-auto">
+                <div class="chat-message message-bot mb-3 p-3 bg-light rounded shadow-sm border">
+                    Hello! I am your Record Assistant. Try one of these examples:
+                    <div class="sample-questions d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm sample-q">What is the blood group of YOGESH A?</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sample-q">Who are all blood group is AB+ ve?</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sample-q">Show me all active records.</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sample-q">List doctors</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sample-q">How many appointments are there?</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm sample-q">Show low stock items</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-white p-3 border-top-0">
+                <form id="chat-form" class="row g-2">
+                    {% csrf_token %}
+                    <div class="col-10">
+                        <input type="text" id="chat-input" class="form-control form-control-lg" placeholder="Type your question here..." autocomplete="off">
+                    </div>
+                    <div class="col-2">
+                        <button type="submit" id="send-btn" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-info py-2">
+            <small><i class="bi bi-info-circle me-1"></i> This chatbot only answers based on the database records. It will not share outside information.</small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatContainer = document.getElementById('chat-container');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const clearBtn = document.getElementById('clear-chat');
+    const sendBtn = document.getElementById('send-btn');
+    const csrfEl = chatForm ? chatForm.querySelector('[name=csrfmiddlewaretoken]') : null;
+    const csrfToken = csrfEl ? csrfEl.value : '';
+
+    if (!chatContainer || !chatForm || !chatInput || !sendBtn) {
+        console.error('Chatbot DOM elements missing');
+        return;
+    }
+
+    let requestInFlight = false;
+
+    function appendMessage(sender, text) {
+        const div = document.createElement('div');
+        div.classList.add('chat-message', `message-${sender}`, 'mb-3', 'p-3', 'rounded', 'shadow-sm', 'border');
+        if (sender === 'bot') {
+            div.classList.add('bg-light');
+        } else {
+            div.classList.add('bg-primary', 'text-white', 'ms-auto');
+            div.style.maxWidth = '80%';
+        }
+        div.textContent = text;
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return div;
+    }
+
+    async function sendQuestion(question) {
+        if (!question || requestInFlight) {
+            return;
+        }
+
+        requestInFlight = true;
+        sendBtn.disabled = true;
+        chatInput.disabled = true;
+
+        appendMessage('user', question);
+        chatInput.value = '';
+        const typingDiv = appendMessage('bot', 'AI is thinking...');
+
+        try {
+            const response = await fetch('{% url "ask_ai" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ question: question })
+            });
+
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(payload.answer || payload.error || `Server returned ${response.status}`);
+            }
+
+            typingDiv.remove();
+            appendMessage('bot', payload.answer || 'No answer returned.');
+        } catch (error) {
+            console.error('Chatbot request failed', error);
+            typingDiv.remove();
+            appendMessage('bot', `I could not process that request right now. ${error.message || ''}`.trim());
+        } finally {
+            requestInFlight = false;
+            sendBtn.disabled = false;
+            chatInput.disabled = false;
+            chatInput.focus();
+        }
+    }
+
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        sendQuestion(chatInput.value.trim());
+    });
+
+    document.querySelectorAll('.sample-q').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const sampleQuestion = this.textContent.trim();
+            chatInput.value = sampleQuestion;
+            sendQuestion(sampleQuestion);
+        });
+    });
+
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            chatContainer.innerHTML = '';
+            appendMessage('bot', 'Chat cleared. How can I help you today?');
+            chatInput.focus();
+        });
+    }
+});
+</script>
+{% endblock %}

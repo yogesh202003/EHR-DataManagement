@@ -1,0 +1,61 @@
+﻿{% extends 'management/base.html' %}
+
+{% block title %}Telemedicine Room | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row g-4 animate__animated animate__fadeIn">
+    <div class="col-lg-8">
+        <!-- Video Simulation Card -->
+        <div class="card p-0 border-0 shadow-lg bg-dark rounded-5 overflow-hidden position-relative video-room">
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center text-white">
+                <i class="bi bi-camera-video-off fs-1 mb-3"></i>
+                <h4 class="fw-bold">Virtual Consultation Room</h4>
+                <p class="opacity-50">Camera connection encrypted and secure</p>
+                    <div class="d-flex gap-3 mt-4">
+                    <button class="btn btn-primary btn-circle-60 shadow-sm"><i class="bi bi-mic-fill fs-4"></i></button>
+                    <button class="btn btn-primary btn-circle-60 shadow-sm"><i class="bi bi-camera-video-fill fs-4"></i></button>
+                    <button class="btn btn-danger btn-circle-60 shadow-sm"><i class="bi bi-telephone-x-fill fs-4"></i></button>
+                </div>
+            </div>
+            <!-- Small self-view overlay -->
+            <div class="position-absolute bottom-0 end-0 m-4 w-25 h-25 bg-secondary rounded-4 border border-dark shadow-lg d-flex align-items-center justify-content-center">
+                <i class="bi bi-person text-dark fs-1"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card h-100 border-0 shadow-sm bg-white rounded-5 d-flex flex-column">
+            <div class="p-4 border-bottom d-flex align-items-center justify-content-between">
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">Consultation Chat</h6>
+                    <small class="text-success fw-bold"><i class="bi bi-circle-fill" style="font-size: 8px;"></i> Session Active</small>
+                </div>
+            </div>
+            
+            <div class="flex-grow-1 p-4 overflow-y-auto h-400 bg-surface" id="room-chat-messages">
+                {% for msg in messages %}
+                <div class="mb-3 {% if msg.sender == user %}text-end{% endif %}">
+                    <div class="d-inline-block p-3 rounded-4 shadow-sm small {% if msg.sender == user %}bg-primary text-white{% else %}bg-light text-dark border{% endif %}" style="max-width: 85%;">
+                        <div class="small fw-bold mb-1" style="font-size: 0.7rem;">{{ msg.sender.username }}</div>
+                        {{ msg.content }}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-muted small py-5">No messages yet. Send a message to start the consultation chat.</p>
+                {% endfor %}
+            </div>
+
+            <div class="p-4 border-top">
+                <form action="." method="POST" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <input type="text" name="content" class="form-control rounded-pill border-2" placeholder="Send a message..." required>
+                    <button type="submit" class="btn btn-primary btn-send p-2">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

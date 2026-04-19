@@ -1,0 +1,42 @@
+﻿{% extends 'management/base.html' %}
+
+{% block title %}Issue Prescription | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row align-items-center justify-content-center animate__animated animate__fadeIn">
+    <div class="col-lg-6">
+        <div class="card p-5 border-0 shadow-lg bg-white rounded-5">
+            <h2 class="fw-bold text-dark mb-4"><i class="bi bi-file-earmark-medical-fill text-primary me-2"></i>Digital <span class="gradient-text">Prescription</span></h2>
+            <p class="text-muted mb-4">Patient: <span class="fw-bold text-dark">{{ appointment.patient.full_name }}</span></p>
+
+            <form action="." method="POST">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark">Medication Name</label>
+                    <input type="text" name="medication_name" class="form-control rounded-4 p-3 border-2" placeholder="e.g. Paracetamol 500mg" required>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Dosage</label>
+                        <input type="text" name="dosage" class="form-control rounded-4 p-3 border-2" placeholder="e.g. 1-0-1 (After Food)" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold text-dark">Duration (Days)</label>
+                        <input type="number" name="duration_days" class="form-control rounded-4 p-3 border-2" value="7" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark">Special Instructions</label>
+                    <textarea name="instructions" class="form-control rounded-4 p-3 border-2" rows="3" placeholder="Additional advice..."></textarea>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow">Generate & Sign Prescription</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

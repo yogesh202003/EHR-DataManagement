@@ -1,0 +1,1323 @@
+{% extends 'management/base.html' %}
+
+{% block title %}EHR Data | Modern Clinical Intelligence Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==========================================
+       LANDING PAGE — FULL REVAMP
+    ========================================== */
+    :root {
+        --landing-hero-bg: #0a1628;
+        --landing-hero-text: #ffffff;
+        --landing-section-bg: #ffffff;
+        --landing-section-text: #1e293b;
+        --landing-footer-bg: #0a1628;
+    }
+
+    body.dark-mode {
+        --landing-hero-bg: #020617;
+        --landing-section-bg: #020617;
+        --landing-section-text: #f1f5f9;
+        --landing-footer-bg: #020617;
+    }
+
+    /* Remove container top margin for the landing page */
+    .container.mt-5 { margin-top: 0 !important; }
+
+    /* ──── Hero Section ──── */
+    .hero-section {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        background: var(--landing-hero-bg);
+        transition: background 0.5s ease;
+    }
+    .hero-bg {
+        position: absolute;
+        inset: 0;
+        background: url('/media/backgrounds/hero_bg.png') center/cover no-repeat;
+        transform: scale(1.05);
+        transition: transform 8s ease-out;
+        filter: brightness(0.45) saturate(1.2);
+        z-index: 0;
+    }
+    .hero-bg.loaded { transform: scale(1); }
+
+    /* Gradient overlay on the hero — lighter for bright day image */
+    .hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            135deg,
+            rgba(8, 18, 50, 0.82) 0%,
+            rgba(6, 70, 160, 0.45) 55%,
+            rgba(8, 18, 50, 0.72) 100%
+        );
+        z-index: 1;
+    }
+
+    /* Animated floating orbs behind text */
+    .hero-orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        animation: orb-float 8s ease-in-out infinite;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .hero-orb-1 {
+        width: 500px; height: 500px;
+        background: radial-gradient(circle, rgba(37,99,235,0.35), transparent 70%);
+        top: -100px; left: -100px;
+        animation-delay: 0s;
+    }
+    .hero-orb-2 {
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(14,165,233,0.30), transparent 70%);
+        bottom: -80px; right: 10%;
+        animation-delay: -4s;
+    }
+    @keyframes orb-float {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-30px) scale(1.04); }
+    }
+
+    /* Hero Content */
+    .hero-content {
+        position: relative;
+        z-index: 3;
+        width: 100%;
+        padding: 7rem 0 5rem;
+    }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(37,99,235,0.18);
+        border: 1px solid rgba(96,165,250,0.45);
+        color: #93c5fd;
+        padding: 0.4rem 1.1rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 1.75rem;
+        backdrop-filter: blur(8px);
+        animation: badge-pulse 3s ease-in-out infinite;
+    }
+    @keyframes badge-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(96,165,250,0); }
+        50% { box-shadow: 0 0 0 8px rgba(37,99,235,0.25); }
+    }
+    .hero-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(2.4rem, 2rem + 3vw, 5rem);
+        font-weight: 800;
+        line-height: 1.1;
+        color: var(--landing-hero-text);
+        margin-bottom: 1.5rem;
+        letter-spacing: -0.03em;
+    }
+    .hero-title .gradient-word {
+        background: linear-gradient(90deg, #60a5fa, #38bdf8, #34d399);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 200%;
+        animation: gradient-shift 4s ease infinite;
+    }
+    @keyframes gradient-shift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .hero-sub {
+        font-size: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+        color: rgba(255,255,255,0.72);
+        max-width: 560px;
+        line-height: 1.8;
+        margin-bottom: 2.5rem;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; }
+
+    .btn-hero-primary {
+        padding: 0.9rem 2.2rem;
+        background: linear-gradient(135deg, #2563eb, #0ea5e9);
+        color: white;
+        border: none;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 1rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: 0 4px 20px rgba(37,99,235,0.4);
+    }
+    .btn-hero-primary::before {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(37,99,235,0.55); color: white; }
+    .btn-hero-primary:hover::before { left: 100%; }
+
+    .btn-hero-ghost {
+        padding: 0.9rem 2.2rem;
+        background: rgba(255,255,255,0.08);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.25);
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 1rem;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+    .btn-hero-ghost:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.5); color: white; transform: translateY(-3px); }
+
+    /* Scrolling indicator */
+    .scroll-hint {
+        position: absolute;
+        bottom: 2.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        color: rgba(255,255,255,0.5);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        animation: scroll-bounce 2s ease-in-out infinite;
+    }
+    @keyframes scroll-bounce {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+
+
+
+    /* Functional Quick Action Cards */
+    .quick-action-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(10px);
+        color: var(--landing-hero-text);
+    }
+    .quick-action-card:hover {
+        background: rgba(37, 99, 235, 0.15);
+        border-color: rgba(96, 165, 250, 0.4);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+    .qa-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        transition: transform 0.3s ease;
+    }
+    .quick-action-card:hover .qa-icon {
+        transform: scale(1.1);
+    }
+    .qa-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+    .qa-text small {
+        font-size: 0.75rem;
+    }
+
+    /* ──── Shared Glass Panel for Hero Boxes ──── */
+    .hero-panel-glass {
+        background: linear-gradient(135deg, rgba(37,99,235,0.25) 0%, rgba(2,12,30,0.65) 100%);
+        border: 1px solid rgba(96,165,250,0.3);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.08);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+    }
+    .hero-panel-glass:hover {
+        border-color: rgba(96,165,250,0.6);
+        box-shadow: 0 25px 60px rgba(37,99,235,0.3), inset 0 0 0 1px rgba(255,255,255,0.15);
+        transform: translateY(-4px);
+    }
+    .hero-panel-glass::before {
+        content: '';
+        position: absolute;
+        top: -50%; left: -50%;
+        width: 200%; height: 200%;
+        background: radial-gradient(circle, rgba(96,165,250,0.15) 0%, transparent 60%);
+        opacity: 0;
+        transition: opacity 0.5s;
+        pointer-events: none;
+    }
+    .hero-panel-glass:hover::before { opacity: 1; }
+
+    /* ──── Mini live-data box (right side) ──── */
+    .mini-live-box {
+        animation: float-card 6s ease-in-out infinite;
+    }
+    @keyframes float-card {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    .theme-transition-box { position: relative; }
+    .theme-transition-box::after {
+        content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 2px;
+        background: linear-gradient(120deg, #60a5fa, #34d399, #a78bfa, #38bdf8);
+        background-size: 200% 200%; animation: border-shift 4s linear infinite;
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+    }
+    @keyframes border-shift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .stat-card-modern {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px; transition: all 0.3s ease;
+        display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem;
+    }
+    .stat-card-modern:hover {
+        background: rgba(255, 255, 255, 0.08); transform: translateX(5px);
+        border-color: rgba(96,165,250,0.3); box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .stat-icon-wrap {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+    }
+
+    /* Live pulse indicator */
+    .live-dot {
+        width: 8px; height: 8px;
+        background: #22c55e;
+        border-radius: 50%;
+        display: inline-block;
+        animation: live-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes live-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+    }
+
+    /* Compact hero card override */
+    .hero-glass-card--compact {
+        padding: 1.4rem;
+        border-radius: 18px;
+    }
+
+    /* Real stat rows inside compact card */
+    .real-stat-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+        margin-bottom: 0.25rem;
+    }
+    .real-stat-icon {
+        width: 34px; height: 34px;
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+    .real-stat-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.88);
+        line-height: 1.2;
+    }
+    .real-stat-desc {
+        font-size: 0.68rem;
+        color: rgba(255,255,255,0.4);
+        margin-top: 1px;
+    }
+    .real-stat-value {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: #60a5fa;
+        line-height: 1;
+        min-width: 40px;
+        text-aetter-spacing: 0.07em;
+    }
+
+    /* ──── Features Section ──── */
+    .features-section {
+        position: relative;
+        padding: 7rem 0;
+        overflow: hidden;
+        background: var(--landing-section-bg);
+        transition: all 0.5s ease;
+    }
+    .features-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url('/media/backgrounds/features_bg.png') center/cover no-repeat;
+        opacity: 0.06;
+    }
+    .section-eyebrow {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #2563eb;
+        margin-bottom: 0.75rem;
+    }
+    .section-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        color: var(--landing-section-text);
+        margin-bottom: 1rem;
+    }
+    .section-sub { color: var(--landing-section-text); opacity: 0.7; font-size: 1.05rem; max-width: 560px; margin: 0 auto 4rem; }
+
+    .feature-card {
+        border-radius: 20px;
+        padding: 2.2rem;
+        background: var(--landing-section-bg);
+        border: 1px solid rgba(37,99,235,0.25);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        color: var(--landing-section-text);
+    }
+    .feature-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #2563eb, #0ea5e9);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.35s ease;
+    }
+    .feature-card:hover {
+        border-color: #bfdbfe;
+        box-shadow: 0 20px 50px rgba(37,99,235,0.25);
+        transform: translateY(-8px);
+    }
+    .feature-card:hover::after { transform: scaleX(1); }
+
+    .feature-icon-wrap {
+        width: 62px; height: 62px;
+        border-radius: 18px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.7rem;
+        margin-bottom: 1.4rem;
+        transition: 0.3s;
+    }
+    .feature-card:hover .feature-icon-wrap { transform: scale(1.1) rotate(-3deg); }
+    .feature-card h5 { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.6rem; }
+    .feature-card p { color: var(--landing-section-text); opacity: 0.7; font-size: 0.9rem; line-height: 1.7; margin: 0; }
+
+    /* ──── Health Tips Section ──── */
+    .tips-section { padding: 7rem 0; background: var(--landing-section-bg); transition: background 0.5s ease; }
+    .tip-card {
+        border-radius: 20px;
+        overflow: hidden;
+        background: var(--landing-section-bg);
+        border: 1px solid rgba(37,99,235,0.25);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+        height: 100%;
+        color: var(--landing-section-text);
+    }
+    .tip-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 25px 55px rgba(0,0,0,0.08);
+    }
+    .tip-img-wrap {
+        position: relative;
+        height: 220px;
+        overflow: hidden;
+    }
+    .tip-img-wrap img {
+        width: 100%; height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .tip-card:hover .tip-img-wrap img { transform: scale(1.07); }
+    .tip-img-tag {
+        position: absolute;
+        top: 1rem; left: 1rem;
+        padding: 0.3rem 0.9rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        backdrop-filter: blur(8px);
+    }
+    .tip-body { padding: 1.6rem; }
+    .tip-body h4 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .tip-body p { color: var(--landing-section-text); opacity: 0.7; font-size: 0.87rem; line-height: 1.7; margin-bottom: 0.9rem; }
+    .tip-bullets { list-style: none; padding: 0; margin: 0; }
+    .tip-bullets li {
+        position: relative;
+        padding-left: 1.3rem;
+        font-size: 0.83rem;
+        color: var(--landing-section-text);
+        opacity: 0.7;
+        margin-bottom: 0.35rem;
+    }
+    .tip-bullets li::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 7px;
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: #60a5fa;
+    }
+
+    /* ──── Quote Section ──── */
+    .quote-section {
+        position: relative;
+        padding: 7rem 0;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--landing-footer-bg), #0c3564);
+        text-align: center;
+        transition: background 0.5s ease;
+    }
+    .quote-glow {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 50%, rgba(37,99,235,0.25), transparent 70%);
+    }
+    .carousel-item .quote-text {
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(1.3rem, 1rem + 1.5vw, 2.1rem);
+        font-weight: 700;
+        font-style: italic;
+        color: white;
+        line-height: 1.5;
+        max-width: 820px;
+        margin: 0 auto 1rem;
+    }
+    .carousel-item .quote-author {
+        color: #60a5fa;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    .carousel-controls .carousel-control-btn {
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        background: rgba(37,99,235,0.25);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: 0.3s;
+        font-size: 1.1rem;
+    }
+    .carousel-controls .carousel-control-btn:hover {
+        background: rgba(37,99,235,0.5);
+        border-color: #60a5fa;
+    }
+    .carousel-indicators-dots { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem; }
+    .dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .dot.active { background: #60a5fa; width: 24px; border-radius: 4px; }
+
+    /* ──── CTA Section ──── */
+    .cta-section {
+        padding: 7rem 0;
+        background: linear-gradient(135deg, #1d4ed8, #0284c7);
+        position: relative;
+        overflow: hidden;
+        text-align: center;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="10" cy="10" r="1.5" fill="rgba(255,255,255,0.08)"/><circle cx="30" cy="25" r="1" fill="rgba(255,255,255,0.06)"/><circle cx="70" cy="15" r="1.5" fill="rgba(255,255,255,0.08)"/><circle cx="90" cy="40" r="1" fill="rgba(255,255,255,0.06)"/><circle cx="50" cy="60" r="2" fill="rgba(255,255,255,0.05)"/><circle cx="20" cy="75" r="1.5" fill="rgba(255,255,255,0.07)"/><circle cx="80" cy="80" r="1" fill="rgba(255,255,255,0.06)"/></svg>');
+        background-size: 180px;
+    }
+    .cta-section .cta-inner { position: relative; z-index: 2; }
+    .cta-section h2 { font-family: 'Outfit', sans-serif; font-size: clamp(2rem, 1.5rem + 2vw, 3rem); font-weight: 800; color: white; margin-bottom: 1rem; }
+    .cta-section p { color: rgba(255,255,255,0.8); font-size: 1.1rem; margin-bottom: 2.5rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .btn-cta-white {
+        padding: 1rem 2.5rem;
+        background: white;
+        color: #1d4ed8;
+        border: none;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .btn-cta-white:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(0,0,0,0.2); color: #1d4ed8; }
+
+    /* ──── Landing Footer ──── */
+    .landing-footer {
+        background: var(--landing-footer-bg);
+        color: rgba(255,255,255,0.65);
+        padding: 5rem 0 2rem;
+        transition: background 0.5s ease;
+    }
+    .footer-brand { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: white; margin-bottom: 0.75rem; }
+    .footer-desc { font-size: 0.9rem; line-height: 1.8; max-width: 280px; }
+    .footer-social { display: flex; gap: 0.75rem; margin-top: 1.25rem; }
+    .footer-social-btn {
+        width: 40px; height: 40px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(37,99,235,0.25);
+        display: flex; align-items: center; justify-content: center;
+        color: rgba(255,255,255,0.6);
+        font-size: 1rem;
+        transition: 0.3s;
+        text-decoration: none;
+    }
+    .footer-social-btn:hover { background: #2563eb; border-color: #2563eb; color: white; transform: translateY(-3px); }
+    .footer-heading { font-weight: 700; color: white; font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1.2rem; }
+    .footer-links { list-style: none; padding: 0; margin: 0; }
+    .footer-links li { margin-bottom: 0.6rem; }
+    .footer-links a { color: rgba(255,255,255,0.5); font-size: 0.88rem; text-decoration: none; transition: 0.25s; }
+    .footer-links a:hover { color: #60a5fa; padding-left: 4px; }
+    .footer-divider { border-color: rgba(255,255,255,0.07); margin: 3rem 0 1.5rem; }
+    .footer-bottom { font-size: 0.8rem; color: rgba(255,255,255,0.35); }
+
+    .newsletter-input-group { display: flex; gap: 0.5rem; }
+    .newsletter-input {
+        flex: 1;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
+        padding: 0.7rem 1rem;
+        color: white;
+        font-size: 0.9rem;
+        outline: none;
+        transition: 0.3s;
+    }
+    .newsletter-input::placeholder { color: rgba(255,255,255,0.35); }
+    .newsletter-input:focus { border-color: #60a5fa; background: rgba(37,99,235,0.25); }
+    .newsletter-btn {
+        background: #2563eb;
+        border: none;
+        color: white;
+        border-radius: 10px;
+        padding: 0.7rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: 0.3s;
+        white-space: nowrap;
+    }
+    .newsletter-btn:hover { background: #1d4ed8; transform: translateY(-2px); }
+
+    /* Dark mode overrides */
+    body.dark-mode .feature-card { background: var(--bg-surface); border-color: var(--border-color); }
+    body.dark-mode .tip-card { background: var(--bg-surface); border-color: var(--border-color); }
+    body.dark-mode .features-section { background: var(--bg-body); }
+    body.dark-mode .tips-section { background: var(--bg-body); }
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ Animations Ã¢â€â‚¬Ã¢â€â‚¬ */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.revealed { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ Responsive Ã¢â€â‚¬Ã¢â€â‚¬ */
+    @media (max-width: 991.98px) {
+        .hero-content { padding: 6rem 0 4rem; }
+    }
+    @media (max-width: 767.98px) {
+        .hero-title { font-size: 2.4rem; }
+        .hero-sub { font-size: 1rem; }
+        .hero-actions { flex-direction: column; }
+        .hero-actions .btn-hero-primary,
+        .hero-actions .btn-hero-ghost { width: 100%; justify-content: center; }
+        .stats-strip { padding: 4rem 0; }
+        .counter-card { margin-bottom: 1rem; }
+        .features-section, .tips-section { padding: 5rem 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ══════════════════════════════════════════════
+     HERO SECTION — Full viewport with image BG
+══════════════════════════════════════════════ -->
+<section class="hero-section">
+    <!-- Background Image -->
+    <div class="hero-bg" id="heroBg"></div>
+    <!-- Color Overlay -->
+    <div class="hero-overlay"></div>
+    <!-- Ambient Orbs -->
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+
+    <div class="container hero-content">
+        <div class="row align-items-center gy-5 justify-content-center">
+
+            <!-- Left: Functional Quick Actions -->
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <div class="hero-panel-glass p-4 p-xl-5 mx-auto" style="max-width: 520px;">
+
+
+                <!-- Short & Crispy Headline -->
+                <h1 class="hero-title animate__animated animate__fadeInUp mb-3" style="font-size: clamp(2.2rem, 2rem + 2.5vw, 4rem);">
+                    <span class="gradient-word">Smart Care</span>,<br>
+                    Instantly Accessible.
+                </h1>
+
+                <!-- Concise Subtext -->
+                <p class="hero-sub animate__animated animate__fadeInUp mb-4" style="font-size: 1.1rem; max-width: 480px; animation-delay:0.1s;">
+                    Experience next-generation clinical tools. Rapidly check symptoms using AI, find nearby clinics, or access your medical records.
+                </p>
+
+                <!-- Functional Quick Action Cards Grid -->
+                <div class="row g-3 animate__animated animate__fadeInUp" style="animation-delay:0.2s; max-width: 550px;">
+                    <div class="col-sm-6">
+                        <a href="{% url 'symptom_checker' %}" class="quick-action-card">
+                            <div class="qa-icon" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8;">
+                                <i class="bi bi-heart-pulse-fill"></i>
+                            </div>
+                            <div class="qa-text">
+                                <span class="d-block fw-bold text-white mb-1">Check Symptoms</span>
+                                <small style="color: rgba(255,255,255,0.55);">AI Diagnostics</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6">
+                        <a href="{% url 'nearby_healthcare' %}" class="quick-action-card">
+                            <div class="qa-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+                                <i class="bi bi-geo-alt-fill"></i>
+                            </div>
+                            <div class="qa-text">
+                                <span class="d-block fw-bold text-white mb-1">Find Clinics</span>
+                                <small style="color: rgba(255,255,255,0.55);">Maps &amp; Nav</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-sm-6">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="quick-action-card">
+                            <div class="qa-icon" style="background: rgba(96, 165, 250, 0.15); color: #60a5fa;">
+                                <i class="bi bi-grid-1x2-fill"></i>
+                            </div>
+                            <div class="qa-text">
+                                <span class="d-block fw-bold text-white mb-1">My Dashboard</span>
+                                <small style="color: rgba(255,255,255,0.55);">View Records</small>
+                            </div>
+                        </a>
+                        {% else %}
+                        <a href="{% url 'login' %}" class="quick-action-card">
+                            <div class="qa-icon" style="background: rgba(96, 165, 250, 0.15); color: #60a5fa;">
+                                <i class="bi bi-calendar-plus-fill"></i>
+                            </div>
+                            <div class="qa-text">
+                                <span class="d-block fw-bold text-white mb-1">Book Visit</span>
+                                <small style="color: rgba(255,255,255,0.55);">Appointment</small>
+                            </div>
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'logout' %}" class="quick-action-card">
+                            <div class="qa-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </div>
+                            <div class="qa-text">
+                                <span class="d-block fw-bold text-white mb-1">Sign Out</span>
+                                <small style="color: rgba(255,255,255,0.55);">Exit Session</small>
+                            </div>
+                        </a>
+                        {% else %}
+                        <a href="{% url 'register' %}" class="quick-action-card">
+                            <div class="qa-icon" style="background: rgba(167, 139, 250, 0.15); color: #a78bfa;">
+                                <i class="bi bi-person-plus-fill"></i>
+                            </div>
+                            <div class="qa-text">
+                                <span class="d-block fw-bold text-white mb-1">Create Account</span>
+                                <small style="color: rgba(255,255,255,0.55);">Join Healthcare Network</small>
+                            </div>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div> <!-- End quick action grid -->
+                </div> <!-- End inner padding wrapper -->
+            </div> <!-- End left column -->
+
+            <!-- Right: Enlarged live-data box -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="hero-panel-glass mini-live-box theme-transition-box p-4 mx-auto" style="max-width: 440px;">
+                    <!-- Title row -->
+                    <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom border-light border-opacity-10">
+                        <span class="fw-bold text-white fs-5"><i class="bi bi-activity text-primary me-2"></i> System Pulse</span>
+                        <div class="d-flex align-items-center gap-2 bg-success bg-opacity-25 rounded-pill px-3 py-1 border border-success border-opacity-50">
+                            <span class="live-dot"></span>
+                            <span class="text-success fw-bold small text-uppercase tracking-widest" style="font-size: 0.7rem;">Live Data</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex flex-column gap-3">
+                        <!-- Stat Card 1 -->
+                        <div class="stat-card-modern">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="stat-icon-wrap" style="background: rgba(96,165,250,0.15); color: #60a5fa;">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div>
+                                    <span class="d-block text-white opacity-75 small text-uppercase fw-semibold mb-1" style="font-size:0.75rem; letter-spacing:1px;">Active Patients</span>
+                                    <h3 class="m-0 text-white fw-bold gradient-word" style="font-family:'Outfit', sans-serif;">{{ landing_total_patients }}</h3>
+                                </div>
+                            </div>
+                            <i class="bi bi-graph-up-arrow text-primary opacity-25 fs-3"></i>
+                        </div>
+
+                        <!-- Stat Card 2 -->
+                        <div class="stat-card-modern">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="stat-icon-wrap" style="background: rgba(52,211,153,0.15); color: #34d399;">
+                                    <i class="bi bi-file-earmark-medical-fill"></i>
+                                </div>
+                                <div>
+                                    <span class="d-block text-white opacity-75 small text-uppercase fw-semibold mb-1" style="font-size:0.75rem; letter-spacing:1px;">Total Reports</span>
+                                    <h3 class="m-0 fw-bold" style="font-family:'Outfit', sans-serif; color: #34d399;">{{ landing_total_reports }}</h3>
+                                </div>
+                            </div>
+                            <i class="bi bi-shield-check text-success opacity-25 fs-3"></i>
+                        </div>
+
+                        <!-- Stat Card 3 -->
+                        <div class="stat-card-modern">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="stat-icon-wrap" style="background: rgba(167,139,250,0.15); color: #a78bfa;">
+                                    <i class="bi bi-robot"></i>
+                                </div>
+                                <div>
+                                    <span class="d-block text-white opacity-75 small text-uppercase fw-semibold mb-1" style="font-size:0.75rem; letter-spacing:1px;">AI Scans</span>
+                                    <h3 class="m-0 fw-bold" style="font-family:'Outfit', sans-serif; color: #a78bfa;">{{ landing_total_ai_scans }}</h3>
+                                </div>
+                            </div>
+                            <i class="bi bi-cpu text-info opacity-25 fs-3" style="color: #a78bfa !important;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scroll hint -->
+    <div class="scroll-hint">
+        <span>Scroll</span>
+        <i class="bi bi-chevron-down"></i>
+    </div>
+</section>
+
+
+
+<!-- ══════════════════════════════════════════════
+     FEATURES SECTION
+══════════════════════════════════════════════ -->
+<section class="features-section" id="features">
+    <div class="container position-relative" style="z-index:2;">
+        <div class="text-center reveal">
+            <div class="section-eyebrow"><i class="bi bi-stars me-1"></i> Platform Capabilities</div>
+            <h2 class="section-title">Integrated <span class="gradient-text">Care Network</span></h2>
+            <p class="section-sub">Leveraging modern architecture to bridge the gap between clinics and patients seamlessly.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6 reveal reveal-delay-1">
+                <div class="feature-card" id="fc-ai">
+                    <div class="feature-icon-wrap" style="background:rgba(37,99,235,0.25); color:#2563eb;">
+                        <i class="bi bi-robot"></i>
+                    </div>
+                    <h5>Clinical AI Assistant</h5>
+                    <p>Advanced record querying and instant clinical insights powered by next-gen AI for doctors and staff.</p>
+                    <div class="mt-3">
+                        <span style="font-size:0.75rem; color:#2563eb; font-weight:600;">Learn more <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 reveal reveal-delay-2">
+                <div class="feature-card" id="fc-symptom">
+                    <div class="feature-icon-wrap" style="background:rgba(37,99,235,0.25); color:#0ea5e9;">
+                        <i class="bi bi-heart-pulse-fill"></i>
+                    </div>
+                    <h5>AI Symptom Checker</h5>
+                    <p>Intelligent analysis of patient symptoms with disease probability modeling and instant triage support.</p>
+                    <div class="mt-3">
+                        <span style="font-size:0.75rem; color:#0ea5e9; font-weight:600;">Learn more <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 reveal reveal-delay-3">
+                <div class="feature-card" id="fc-tele">
+                    <div class="feature-icon-wrap" style="background:rgba(37,99,235,0.25); color:#10b981;">
+                        <i class="bi bi-camera-video-fill"></i>
+                    </div>
+                    <h5>Telemedicine Suite</h5>
+                    <p>End-to-end secure video consultations and direct doctor-patient chat with session recording.</p>
+                    <div class="mt-3">
+                        <span style="font-size:0.75rem; color:#10b981; font-weight:600;">Learn more <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 reveal reveal-delay-4">
+                <div class="feature-card" id="fc-rx">
+                    <div class="feature-icon-wrap" style="background:rgba(37,99,235,0.25); color:#ef4444;">
+                        <i class="bi bi-file-earmark-medical-fill"></i>
+                    </div>
+                    <h5>E-Prescriptions</h5>
+                    <p>Digitally signed prescriptions with QR verification, pharmacy integration, and refill tracking.</p>
+                    <div class="mt-3">
+                        <span style="font-size:0.75rem; color:#ef4444; font-weight:600;">Learn more <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 reveal reveal-delay-1">
+                <div class="feature-card" id="fc-billing">
+                    <div class="feature-icon-wrap" style="background:rgba(37,99,235,0.25); color:#f59e0b;">
+                        <i class="bi bi-credit-card-2-front-fill"></i>
+                    </div>
+                    <h5>Smart Billing</h5>
+                    <p>Automated invoicing, real-time payment tracking, and insurance claim management in one place.</p>
+                    <div class="mt-3">
+                        <span style="font-size:0.75rem; color:#f59e0b; font-weight:600;">Learn more <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 reveal reveal-delay-2">
+                <div class="feature-card" id="fc-labs">
+                    <div class="feature-icon-wrap" style="background:rgba(167,139,250,0.25); color:#a78bfa;">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                    </div>
+                    <h5>Lab Reports Vault</h5>
+                    <p>Secure upload, AI analysis, and instant sharing of lab reports between clinicians and patients.</p>
+                    <div class="mt-3">
+                        <span style="font-size:0.75rem; color:#a78bfa; font-weight:600;">Learn more <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 reveal reveal-delay-3">
+                <div class="feature-card" id="fc-map">
+                    <div class="feature-icon-wrap" style="background:rgba(37,99,235,0.25); color:#14b8a6;">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <h5>Nearby Healthcare</h5>
+                    <p>Real-time map-based finder for nearby clinics, pharmacies, and emergency services near you.</p>
+                    <div class="mt-3">
+                        <span style="font-size:0.75rem; color:#14b8a6; font-weight:600;">Learn more <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 reveal reveal-delay-4">
+                <div class="feature-card" id="fc-analytics">
+                    <div class="feature-icon-wrap" style="background:rgba(37,99,235,0.25); color:#f97316;">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h5>Analytics Dashboard</h5>
+                    <p>Comprehensive clinic performance metrics, patient trend analysis, and revenue intelligence.</p>
+                    <div class="mt-3">
+                        <span style="font-size:0.75rem; color:#f97316; font-weight:600;">Learn more <i class="bi bi-arrow-right"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     HEALTH TIPS SECTION
+══════════════════════════════════════════════ -->
+<section class="tips-section">
+    <div class="container">
+        <div class="text-center reveal">
+            <div class="section-eyebrow"><i class="bi bi-heart-fill me-1"></i> Patient Education</div>
+            <h2 class="section-title">EHR Data <span class="gradient-text">Health Advisory</span></h2>
+            <p class="section-sub">Professional clinical tips for maintaining a high-vibrancy baseline health every day.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6 reveal reveal-delay-1">
+                <div class="tip-card">
+                    <div class="tip-img-wrap">
+                        <img src="/media/backgrounds/tip_hydration.png" alt="Hydration Tip" onerror="this.src='https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=600&q=80'">
+                        <div class="tip-img-tag" style="background:rgba(14,165,233,0.8); color:white;">
+                            <i class="bi bi-droplet-fill me-1"></i>Hydration
+                        </div>
+                    </div>
+                    <div class="tip-body">
+                        <h4><i class="bi bi-droplet-fill text-info me-2"></i>Hydration Logic</h4>
+                        <p>Maintain cellular vitality by consuming at least 2.5L of filtered water daily for optimal cognitive function.</p>
+                        <ul class="tip-bullets">
+                            <li style="--dot-color:#0ea5e9;">
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#0ea5e9;display:block;"></span>
+                                Supports joint lubrication
+                            </li>
+                            <li>
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#0ea5e9;display:block;"></span>
+                                Enhances skin elasticity
+                            </li>
+                            <li>
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#0ea5e9;display:block;"></span>
+                                Boosts nutrient absorption
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 reveal reveal-delay-2">
+                <div class="tip-card">
+                    <div class="tip-img-wrap">
+                        <img src="/media/backgrounds/tip_vitality.png" alt="Activity Tip" onerror="this.src='https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80'">
+                        <div class="tip-img-tag" style="background:rgba(16,185,129,0.85); color:white;">
+                            <i class="bi bi-activity me-1"></i>Exercise
+                        </div>
+                    </div>
+                    <div class="tip-body">
+                        <h4><i class="bi bi-activity text-success me-2"></i>Cardiovascular Stride</h4>
+                        <p>Engage in 30 minutes of moderate-intensity physical activity per day for clinical prevention against chronic conditions.</p>
+                        <ul class="tip-bullets">
+                            <li>
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#10b981;display:block;"></span>
+                                Improves heart-lung efficiency
+                            </li>
+                            <li>
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#10b981;display:block;"></span>
+                                Regulates cortisol levels
+                            </li>
+                            <li>
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#10b981;display:block;"></span>
+                                Promotes lean muscle mass
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-12 reveal reveal-delay-3">
+                <div class="tip-card">
+                    <div class="tip-img-wrap">
+                        <img src="/media/backgrounds/tip_rest.png" alt="Rest Tip" onerror="this.src='https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=600&q=80'">
+                        <div class="tip-img-tag" style="background:rgba(37,99,235,0.85); color:white;">
+                            <i class="bi bi-moon-stars-fill me-1"></i>Sleep
+                        </div>
+                    </div>
+                    <div class="tip-body">
+                        <h4><i class="bi bi-moon-stars-fill text-primary me-2"></i>Restorative Cycles</h4>
+                        <p>Ensure 7—œ9 hours of deep, REM-inclusive sleep for neuronal repair and peak immune system operation.</p>
+                        <ul class="tip-bullets">
+                            <li>
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#2563eb;display:block;"></span>
+                                Facilitates muscle recovery
+                            </li>
+                            <li>
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#2563eb;display:block;"></span>
+                                Consolidates memory paths
+                            </li>
+                            <li>
+                                <span style="position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%;background:#2563eb;display:block;"></span>
+                                Stabilizes emotional regulation
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     QUOTE CAROUSEL
+══════════════════════════════════════════════ -->
+<section class="quote-section" id="quotes">
+    <div class="quote-glow"></div>
+    <div class="container position-relative" style="z-index:2;">
+        <div class="text-center">
+            <i class="bi bi-quote" style="font-size:3.5rem; color:rgba(96,165,250,0.3); display:block; margin-bottom:1.5rem;"></i>
+
+            <div id="quoteCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4500">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <div class="quote-text">"It is health that is real wealth and not pieces of gold and silver."</div>
+                        <div class="quote-author">— Mahatma Gandhi</div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="quote-text">"The greatest wealth is health. Invest in your wellbeing above all else."</div>
+                        <div class="quote-author">— Virgil</div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="quote-text">"To keep the body in good health is a duty — otherwise we shall not be able to keep our mind strong and clear."</div>
+                        <div class="quote-author">— Buddha</div>
+                    </div>
+                    <div class="carousel-item">
+                        <div class="quote-text">"Early to bed and early to rise makes a man healthy, wealthy, and wise."</div>
+                        <div class="quote-author">— Benjamin Franklin</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom indicators + controls -->
+            <div class="carousel-controls d-flex align-items-center justify-content-center gap-3 mt-4">
+                <button class="carousel-control-btn" id="quotePrev" aria-label="Previous quote">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <div class="carousel-indicators-dots" id="quoteDots">
+                    <div class="dot active" data-index="0"></div>
+                    <div class="dot" data-index="1"></div>
+                    <div class="dot" data-index="2"></div>
+                    <div class="dot" data-index="3"></div>
+                </div>
+                <button class="carousel-control-btn" id="quoteNext" aria-label="Next quote">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     CTA SECTION
+══════════════════════════════════════════════ -->
+<section class="cta-section">
+    <div class="container cta-inner">
+        <div class="reveal">
+            <div class="section-eyebrow mx-auto mb-2" style="color:rgba(255,255,255,0.65); text-align:center;">Get Started Today</div>
+            <h2>Ready to transform your<br>clinical workflows?</h2>
+            <p>Join hundreds of clinics already using EHR Data to deliver better patient outcomes faster.</p>
+            <a href="{% url 'login' %}" class="btn-cta-white" id="cta-login-btn">
+                <i class="bi bi-arrow-right-circle-fill"></i>
+                Enter the Portal
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     LANDING FOOTER
+══════════════════════════════════════════════ -->
+<footer class="landing-footer" id="landing-footer">
+    <div class="container">
+        <div class="row gy-5">
+            <!-- Brand column -->
+            <div class="col-lg-4">
+                <div class="footer-brand"><i class="bi bi-clipboard2-data-fill text-primary me-2"></i>EHR Data</div>
+                <p class="footer-desc">Elevating clinical standards through artificial intelligence and transparent patient communication across India.</p>
+                <div class="footer-social">
+                    <a href="#" class="footer-social-btn" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="footer-social-btn" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                    <a href="#" class="footer-social-btn" aria-label="GitHub"><i class="bi bi-github"></i></a>
+                    <a href="#" class="footer-social-btn" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
+                </div>
+            </div>
+
+            <!-- Links columns -->
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="footer-heading">Platform</div>
+                <ul class="footer-links">
+                    <li><a href="#">Dashboard</a></li>
+                    <li><a href="#">Clinical Hub</a></li>
+                    <li><a href="#">Lab Systems</a></li>
+                    <li><a href="#">Billing</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-md-4 col-lg-2">
+                <div class="footer-heading">Support</div>
+                <ul class="footer-links">
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">API Status</a></li>
+                    <li><a href="#">Security</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+
+            <!-- Newsletter -->
+            <div class="col-md-4 col-lg-4">
+                <div class="footer-heading">Stay Updated</div>
+                <p style="font-size:0.85rem; margin-bottom:1rem;">Get clinical insights and platform updates delivered to your inbox.</p>
+                <div class="newsletter-input-group">
+                    <input type="email" class="newsletter-input" placeholder="your@email.com" id="newsletter-email">
+                    <button class="newsletter-btn" id="newsletter-btn">
+                        <i class="bi bi-send-fill me-1"></i>Join
+                    </button>
+                </div>
+                <p style="font-size:0.72rem; color:rgba(255,255,255,0.25); margin-top:0.7rem;">No spam. Unsubscribe anytime.</p>
+            </div>
+        </div>
+
+        <hr class="footer-divider">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 footer-bottom">
+            <span>&copy; 2026 EHR Data Healthcare Systems. All Rights Reserved.</span>
+            <div class="d-flex gap-3">
+                <a href="#" style="color:rgba(255,255,255,0.35); font-size:0.8rem; text-decoration:none; transition:0.25s;" onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Privacy Policy</a>
+                <a href="#" style="color:rgba(255,255,255,0.35); font-size:0.8rem; text-decoration:none; transition:0.25s;" onmouseover="this.style.color='#60a5fa'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">Terms of Service</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ 1. Hero background pan-in Ã¢â€â‚¬Ã¢â€â‚¬ */
+    const heroBg = document.getElementById('heroBg');
+    if (heroBg) requestAnimationFrame(() => heroBg.classList.add('loaded'));
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ 2. Hero mini counters Ã¢â€â‚¬Ã¢â€â‚¬ */
+    function animateCount(el, target, duration, suffix) {
+        let start = 0;
+        const step = Math.ceil(target / (duration / 16));
+        const timer = setInterval(() => {
+            start = Math.min(start + step, target);
+            el.textContent = start + (suffix || '');
+            if (start >= target) clearInterval(timer);
+        }, 16);
+    }
+    setTimeout(() => {
+        animateCount(document.getElementById('hs1'), 124, 1200, '');
+        animateCount(document.getElementById('hs2'), 87, 1200, '');
+        animateCount(document.getElementById('hs3'), 312, 1200, '');
+    }, 600);
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ 3. Scroll-reveal Ã¢â€â‚¬Ã¢â€â‚¬ */
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.classList.add('revealed');
+                observer.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => observer.observe(el));
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ 4. Count-up on stats strip Ã¢â€â‚¬Ã¢â€â‚¬ */
+    const countUps = document.querySelectorAll('.count-up');
+    const countObserver = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+            if (e.isIntersecting) {
+                const target = parseInt(e.target.dataset.target, 10);
+                const el = e.target;
+                let current = 0;
+                const increment = Math.ceil(target / 60);
+                const timer = setInterval(() => {
+                    current = Math.min(current + increment, target);
+                    el.textContent = current.toLocaleString();
+                    if (current >= target) clearInterval(timer);
+                }, 25);
+                countObserver.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.4 });
+    countUps.forEach(el => countObserver.observe(el));
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ 5. Quote Carousel custom controls Ã¢â€â‚¬Ã¢â€â‚¬ */
+    const quoteCarouselEl = document.getElementById('quoteCarousel');
+    if (quoteCarouselEl) {
+        const carousel = new bootstrap.Carousel(quoteCarouselEl, { interval: 4500, ride: 'carousel' });
+        const dots = document.querySelectorAll('#quoteDots .dot');
+
+        quoteCarouselEl.addEventListener('slide.bs.carousel', e => {
+            dots.forEach((d, i) => d.classList.toggle('active', i === e.to));
+        });
+        document.getElementById('quotePrev')?.addEventListener('click', () => carousel.prev());
+        document.getElementById('quoteNext')?.addEventListener('click', () => carousel.next());
+        dots.forEach(d => d.addEventListener('click', () => carousel.to(parseInt(d.dataset.index, 10))));
+    }
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ 6. Smooth scroll for anchor links Ã¢â€â‚¬Ã¢â€â‚¬ */
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+            const target = document.querySelector(a.getAttribute('href'));
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ 7. Newsletter button feedback Ã¢â€â‚¬Ã¢â€â‚¬ */
+    const newsletterBtn = document.getElementById('newsletter-btn');
+    if (newsletterBtn) {
+        newsletterBtn.addEventListener('click', () => {
+            const email = document.getElementById('newsletter-email').value.trim();
+            if (email && email.includes('@')) {
+                newsletterBtn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Subscribed!';
+                newsletterBtn.style.background = '#10b981';
+                document.getElementById('newsletter-email').value = '';
+                setTimeout(() => {
+                    newsletterBtn.innerHTML = '<i class="bi bi-send-fill me-1"></i>Join';
+                    newsletterBtn.style.background = '';
+                }, 3000);
+            } else {
+                newsletterBtn.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Invalid';
+                newsletterBtn.style.background = '#ef4444';
+                setTimeout(() => {
+                    newsletterBtn.innerHTML = '<i class="bi bi-send-fill me-1"></i>Join';
+                    newsletterBtn.style.background = '';
+                }, 2000);
+            }
+        });
+    }
+
+    /* Ã¢â€â‚¬Ã¢â€â‚¬ 8. Parallax hero on mouse move Ã¢â€â‚¬Ã¢â€â‚¬ */
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection && window.innerWidth >= 992) {
+        heroSection.addEventListener('mousemove', e => {
+            const { innerWidth, innerHeight } = window;
+            const dx = (e.clientX / innerWidth - 0.5) * 12;
+            const dy = (e.clientY / innerHeight - 0.5) * 8;
+            heroBg.style.transform = `scale(1.04) translate(${dx}px, ${dy}px)`;
+        });
+        heroSection.addEventListener('mouseleave', () => {
+            heroBg.style.transform = 'scale(1) translate(0,0)';
+        });
+    }
+
+})();
+</script>
+{% endblock %}

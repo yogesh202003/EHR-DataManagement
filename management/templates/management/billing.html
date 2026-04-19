@@ -1,0 +1,233 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Financial Gateway | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row pt-4 px-3 animate__animated animate__fadeIn">
+    <div class="col-12 mb-4 d-flex align-items-center justify-content-between">
+        <div>
+            <h2 class="fw-bold mb-1 ls-n1">Financial Operations</h2>
+            <p class="text-muted mb-0">Secure invoice management and transaction processing</p>
+        </div>
+        <div class="d-none d-md-block">
+            <button class="btn btn-primary rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#createInvoiceModal">
+                <i class="bi bi-plus-circle me-2"></i>Create New Invoice
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Highlights -->
+    <div class="row g-4 mb-5 mt-1">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white card-accent-primary">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="bi bi-wallet2 text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small text-uppercase fw-bold mb-1 ls-1">Total Collections</h6>
+                        <h3 class="mb-0 fw-black">₹{{ total_revenue|default:"0.00" }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white card-accent-warning">
+                <div class="d-flex align-items-center">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="bi bi-clock-history text-warning fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small text-uppercase fw-bold mb-1 ls-1">Pending Receivables</h6>
+                        <h3 class="mb-0 fw-black">₹{{ pending_revenue|default:"0.00" }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 rounded-4 bg-white card-accent-success">
+                <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 p-3 rounded-3 me-3">
+                        <i class="bi bi-check2-circle text-success fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-muted small text-uppercase fw-bold mb-1 ls-1">Processed Today</h6>
+                        <h3 class="mb-0 fw-black">{{ processed_today|default:"0" }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Invoices Ledger -->
+    <div class="col-12">
+        <div class="card p-4 p-md-5 border-0 shadow-smooth rounded-5 bg-white">
+            <h5 class="fw-bold text-dark mb-4 ls-1"><i class="bi bi-receipt-cutoff text-primary me-2"></i>Invoice Central</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light bg-opacity-50">
+                        <tr>
+                            <th class="border-0 py-3 ps-4 small text-uppercase fw-bold text-muted">ID & Date</th>
+                            <th class="border-0 py-3 small text-uppercase fw-bold text-muted">Beneficiary</th>
+                            <th class="border-0 py-3 small text-uppercase fw-bold text-muted">Net Amount</th>
+                            <th class="border-0 py-3 small text-uppercase fw-bold text-muted">Status</th>
+                            <th class="border-0 py-3 pe-4 small text-uppercase fw-bold text-muted">Management</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr class="border-bottom border-light">
+                            <td class="ps-4">
+                                <div class="fw-bold text-primary">#INV-{{ invoice.id|stringformat:"04d" }}</div>
+                                <div class="text-muted extreme-small">{{ invoice.issued_date|date:"M d, Y" }}</div>
+                            </td>
+                            <td><span class="fw-semibold text-dark">{{ invoice.patient.full_name }}</span></td>
+                            <td><span class="fw-black text-dark">₹{{ invoice.total_amount }}</span></td>
+                            <td>
+                                {% if invoice.status == 'Paid' %}
+                                    <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Fulfilled</span>
+                                {% else %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3">Outstanding</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4">
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#viewInvoice{{ invoice.id }}">Details</button>
+                                    {% if invoice.status == 'Unpaid' %}
+                                        <button class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#paymentModal{{ invoice.id }}">Pay Now</button>
+                                    {% else %}
+                                        <button class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="downloadReceipt({{ invoice.id }})">Receipt</button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+    <!-- Create Invoice Modal -->
+    <div class="modal fade" id="createInvoiceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-5 shadow-lg">
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h5 class="fw-bold text-dark">Generate Clinical Invoice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_invoice">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Select Patient</label>
+                            <select name="patient_id" class="form-select rounded-4 border-light bg-light" required>
+                                <option value="" disabled selected>Search Patient Database...</option>
+                                {% for p in patients %}
+                                <option value="{{ p.id }}">{{ p.full_name }} (ID: #{{ p.id }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Total Amount (₹)</label>
+                            <div class="input-group">
+                                <span class="input-group-text border-0 bg-light rounded-start-4">₹</span>
+                                <input type="number" step="0.01" name="amount" class="form-control rounded-end-4 border-light bg-light" placeholder="0.00" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pb-4 px-4">
+                        <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold shadow-sm">
+                            Create Invoice
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% for invoice in invoices %}
+        <!-- Modals for Invoice {{ invoice.id }} -->
+        <div class="modal fade" id="paymentModal{{ invoice.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 rounded-5">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="make_payment">
+                        <div class="modal-body p-4 text-center">
+                            <h4 class="fw-bold mb-3">Secure Payment</h4>
+                            <div class="bg-light p-3 rounded-4 mb-3">
+                                <span class="text-muted small">Total Due</span><br><span class="fs-4 fw-black text-primary">₹{{ invoice.total_amount }}</span>
+                            </div>
+                            <input type="hidden" name="invoice_id" value="{{ invoice.id }}">
+                            <input type="hidden" name="amount" value="{{ invoice.total_amount }}">
+                            <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-bold">Confirm Payment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="viewInvoice{{ invoice.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 rounded-5 p-5">
+                    <h4 class="fw-bold mb-4">Invoice Details</h4>
+                    <div class="row mb-3"><div class="col-6 text-muted">Patient</div><div class="col-6 text-end fw-bold">{{ invoice.patient.full_name }}</div></div>
+                    <div class="row mb-3"><div class="col-6 text-muted">Invoice Date</div><div class="col-6 text-end fw-bold">{{ invoice.issued_date|date:"M d, Y" }}</div></div>
+                    <div class="row mb-3"><div class="col-6 text-muted">Total Amount</div><div class="col-6 text-end fw-bold">₹{{ invoice.total_amount }}</div></div>
+                    <div class="row mb-3"><div class="col-6 text-muted">Status</div><div class="col-6 text-end fw-bold text-{% if invoice.status == 'Paid' %}success{% else %}danger{% endif %}">{{ invoice.status }}</div></div>
+                    <button class="btn btn-light w-100 mt-4 rounded-pill fw-bold" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    <!-- Hidden Receipt Capture Template (Off-screen) -->
+    <div id="receipt-capture-container" style="position: fixed; left: 0; top: 0; width: 600px; opacity: 0; z-index: -9999; pointer-events: none;">
+        <div id="receipt-content" class="bg-white p-5 rounded-4 border shadow-sm" style="color: #000;">
+            <div class="text-center mb-4">
+                <i class="bi bi-shield-plus text-primary fs-1"></i>
+                <h3 class="fw-bold mt-2">EHR DATA RECEIPT</h3>
+                <p class="text-muted small">Validated Digital Transaction</p>
+            </div>
+            <hr>
+            <div id="receipt-details"></div>
+            <div class="mt-5 pt-4 border-top text-center text-muted small">
+                Thank you for choosing EHR Data. This is a computer-generated receipt.
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+    function downloadReceipt(invoiceId) {
+        const modal = document.getElementById(`viewInvoice${invoiceId}`);
+        if (!modal) return;
+        
+        const captureSource = modal.querySelector('.modal-content').cloneNode(true);
+        const captureContainer = document.getElementById('receipt-details');
+        captureContainer.innerHTML = '';
+        captureContainer.appendChild(captureSource);
+
+        const target = document.getElementById('receipt-content');
+        
+        html2canvas(target, { 
+            scale: 2, 
+            backgroundColor: '#ffffff',
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `EHR_Receipt_INV_${invoiceId}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+</script>
+<style>.fw-black { font-weight: 900; }</style>
+{% endblock %}

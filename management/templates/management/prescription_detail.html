@@ -1,0 +1,79 @@
+﻿{% extends 'management/base.html' %}
+
+{% block title %}Medical Prescription | EHR Data{% endblock %}
+
+{% block content %}
+<div class="row align-items-center justify-content-center animate__animated animate__fadeIn">
+    <div class="col-lg-8">
+        <div class="card p-0 border-0 shadow-lg bg-white rounded-5 overflow-hidden" id="printable-prescription">
+            <!-- Header -->
+            <div class="p-5 bg-primary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="fw-bold mb-0">EHR Data <span class="opacity-75">Clinical Network</span></h3>
+                    <p class="mb-0 small opacity-75">License: 1234-MED-AI</p>
+                </div>
+                <div class="text-end">
+                    <p class="mb-1 fw-bold">Dr. {{ prescription.appointment.doctor.user.username }}</p>
+                    <p class="mb-0 small opacity-75">{{ prescription.appointment.doctor.specialization }}</p>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-5 text-dark">
+                <div class="row mb-5 border-bottom pb-4">
+                    <div class="col-6">
+                        <small class="text-muted d-block text-uppercase fw-bold ls-1 mb-1">Patient Details</small>
+                        <h5 class="fw-bold mb-0">{{ prescription.appointment.patient.full_name }}</h5>
+                        <p class="text-muted small">Age: {{ prescription.appointment.patient.age }} | Gender: {{ prescription.appointment.patient.gender }}</p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <small class="text-muted d-block text-uppercase fw-bold ls-1 mb-1">Date Issued</small>
+                        <p class="fw-bold">{{ prescription.created_at|date:"d M Y" }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <h5 class="fw-bold mb-4 text-primary"><i class="bi bi-prescription2 me-2"></i>Prescribed Medications</h5>
+                    <div class="p-4 rounded-4 bg-light border-2 border-primary border-start">
+                        <div class="row align-items-center">
+                            <div class="col-md-5">
+                                <h6 class="fw-bold mb-1">{{ prescription.medication_name }}</h6>
+                                <p class="text-muted small mb-0">{{ prescription.duration_days }} Days course</p>
+                            </div>
+                            <div class="col-md-3">
+                                <span class="badge bg-white text-primary border border-primary px-3 py-2 rounded-pill fw-bold">{{ prescription.dosage }}</span>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <p class="small text-muted mb-0 italic">"{{ prescription.instructions|default:"No special instructions" }}"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-5 d-flex justify-content-between align-items-end opacity-50">
+                    <div class="text-center">
+                        <div class="mb-2" style="height: 40px;"><img src="https://api.qrserver.com/v1/create-qr-code/?size=50x50&data=Prescription-{{ prescription.id }}" alt="QR"></div>
+                        <small class="d-block small">Scan to verify</small>
+                    </div>
+                    <div class="text-center border-top px-5 pt-2">
+                        <p class="small mb-0 fw-bold">Digitally Signed</p>
+                        <p class="small mb-0">EHR Data Auth Service</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <button onclick="window.print()" class="btn btn-primary btn-lg rounded-pill px-5 shadow"><i class="bi bi-printer-fill me-2"></i> Print Prescription (PDF)</button>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .sidebar, .navbar, .btn, footer, #chatbot-bubble { display: none !important; }
+    .main-content { padding: 0 !important; background: white !important; }
+    .card { box-shadow: none !important; border: 1px solid var(--border-color) !important; }
+}
+</style>
+{% endblock %}
