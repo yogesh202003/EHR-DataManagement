@@ -337,4 +337,13 @@
             } else {
                 localStorage.removeItem('preferred_lang');
                 location.reload();
-  
+            }
+        }
+
+        // Apply language on load
+        if (localStorage.getItem('preferred_lang') === 'tamil') {
+            document.addEventListener('DOMContentLoaded', () => setLanguage('tamil'));
+        }
+    </script>
+</body>
+</html>
